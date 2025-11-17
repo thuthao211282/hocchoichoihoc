@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thành tích học sinh | Ez10</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  margin:0; padding:0;
+  display:flex; justify-content:center; align-items:flex-start;
+  min-height:100vh;
+  background: url('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1600&q=80') no-repeat center center fixed;
+  background-size:cover;
+  color:#222;
+  overflow-x:hidden;
+}
+body::before {
+  content:"";
+  position:fixed; inset:0;
+  backdrop-filter: blur(10px);
+  background:rgba(255,255,255,0.5);
+}
+.container {
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(20px);
+  border-radius:25px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.25);
+  padding:40px;
+  width:90%; max-width:1000px;
+  margin:50px auto;
+  text-align:center;
+  position:relative;
+  z-index:1;
+  animation: fadeIn 0.6s ease;
+}
+h1 { font-size:34px; margin-bottom:10px; color:#007bff; text-shadow:0 0 8px rgba(255,255,255,0.8); }
+.subtitle { font-size:16px; color:#444; margin-bottom:25px; }
+
+button {
+  background:linear-gradient(135deg,#007bff,#4facfe);
+  border:none; color:white; padding:8px 20px; border-radius:25px;
+  cursor:pointer; font-size:14px; font-weight:600; transition:0.2s;
+}
+button:hover { transform:scale(1.05); box-shadow:0 5px 15px rgba(0,123,255,0.4); }
+.delete-btn { background:#ff4444 !important; margin-left:10px; }
+
+.stats-card {
+  background: rgba(255,255,255,0.95);
+  border-radius:18px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.1);
+  padding:20px;
+  margin:15px 0;
+  text-align:left;
+  position:relative;
+  overflow:hidden;
+  animation:fadeInUp 0.5s ease;
+}
+.stats-header { display:flex; align-items:center; gap:12px; }
+.stats-header img { width:45px; height:45px; border-radius:50%; object-fit:cover; border:2px solid #007bff; }
+.stats-header h3 { margin:0; color:#007bff; flex:1; }
+.progress-bar { width:100%; background:#e9ecef; border-radius:12px; overflow:hidden; height:10px; margin:8px 0; }
+.progress-fill { height:10px; background:linear-gradient(90deg,#007bff,#00c6ff); transition:width 0.4s ease; }
+
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+@keyframes fadeIn{from{opacity:0;transform:scale(0.95);}to{opacity:1;transform:scale(1);} }
+
+#filters { display:flex; justify-content:center; gap:15px; margin:20px 0; flex-wrap:wrap; }
+#statsList { margin-top:10px; }
+.footer-note { margin-top:25px; font-size:13px; color:#666; }
+
+input, select {
+  padding:6px 12px;
+  border-radius:15px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1><i class="fa-solid fa-chart-line"></i> Thành tích học sinh</h1>
+  <p class="subtitle">Kiểm tra kết quả của tất cả học sinh</p>
+  <button id="homeBtn"><i class="fa-solid fa-house"></i> Về trang chủ</button>
+
+  <div id="filters">
+    <input type="text" id="searchName" placeholder="Tìm theo tên học sinh">
+    <select id="kitFilter"><option value="">-- Lọc theo Kit --</option></select>
+  </div>
+
+  <div id="statsList"><p>Tải dữ liệu ...</p></div>
+  <p class="footer-note"><i class="fa-solid fa-lightbulb"></i> Tip: Tải lại trang để kiểm tra.</p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+// ===== Firebase ez10 =====
+const firebaseConfigEz10 = {
+  apiKey: "AIzaSyAJHlNUMvIisbwCjAUQDT6DPNnkuTtKEaQ",
+  authDomain: "ez10-51a9d.firebaseapp.com",
+  projectId: "ez10-51a9d",
+  storageBucket: "ez10-51a9d.appspot.com",
+  messagingSenderId: "1085810670947",
+  appId: "1:1085810670947:web:047775318ed05d9f36a756",
+  measurementId: "G-4CW1EW1064"
+};
+const ez10App = initializeApp(firebaseConfigEz10, "ez10App");
+const ez10Db = getFirestore(ez10App);
+
+let allSubmissions = [];
+let kitMap = {};
+
+// Random avatar
+function randomAvatar(){
+  const avatars = [
+    'https://cdn-icons-png.flaticon.com/512/219/219983.png',
+    'https://cdn-icons-png.flaticon.com/512/4140/4140048.png',
+    'https://cdn-icons-png.flaticon.com/512/4140/4140037.png',
+    'https://cdn-icons-png.flaticon.com/512/4140/4140051.png',
+    'https://cdn-icons-png.flaticon.com/512/1154/1154471.png'
+  ];
+  return avatars[Math.floor(Math.random()*avatars.length)];
+}
+
+// Render submissions
+function renderStats(list){
+  const listDiv = document.getElementById('statsList');
+  listDiv.innerHTML = '';
+  if(list.length===0){ listDiv.innerHTML = '<p>Không tìm thấy dữ liệu</p>'; return; }
+
+  list.forEach(s=>{
+    const percentage = ((s.correct/s.total)*100).toFixed(1);
+    const date = s.date ? new Date(s.date).toLocaleString() : "N/A";
+    const avatar = randomAvatar();
+    const progressColor = percentage>80 ? '#00c851' : percentage>60 ? '#ffbb33' : '#ff4444';
+    const codeName = kitMap[s.kitCode] || s.kitCode;
+
+    const submissionDiv = document.createElement('div');
+    submissionDiv.className = 'stats-card';
+    submissionDiv.innerHTML = `
+      <div class="stats-header">
+        <img src="${avatar}" alt="avatar">
+        <h3>${s.username || 'Guest'} - ${codeName}</h3>
+        <button class="delete-btn"><i class="fa-solid fa-trash"></i> Xóa</button>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="progress-bar"><div class="progress-fill" style="width:${percentage}%;background:${progressColor}"></div></div>
+        <small>Score: ${s.score || 0} | Correct: ${s.correct || 0}/${s.total || 0} (${percentage}%)</small><br>
+        <small>Ngày: ${date}</small>
+      </div>
+    `;
+    listDiv.appendChild(submissionDiv);
+
+    // Gắn event listener cho nút delete
+    const delBtn = submissionDiv.querySelector('.delete-btn');
+    delBtn.addEventListener('click', async ()=>{
+      if(!confirm("Bạn có chắc muốn xóa submission này?")) return;
+      try{
+        await deleteDoc(doc(ez10Db,"studentStats",s.docId));
+        allSubmissions = allSubmissions.filter(sub => sub.docId !== s.docId);
+        applyFilter();
+      }catch(err){
+        alert("❌ Lỗi xóa: "+err.message);
+      }
+    });
+  });
+}
+
+// Filter
+function applyFilter(){
+  const searchName = (document.getElementById('searchName').value || "").toLowerCase();
+  const kitCode = document.getElementById('kitFilter').value;
+
+  const filtered = allSubmissions.filter(s=>{
+    const uname = s.username || "";
+    const kcode = s.kitCode + "";
+    const matchName = uname.toLowerCase().includes(searchName);
+    const matchKit = kitCode ? kcode === kitCode : true;
+    return matchName && matchKit;
+  });
+
+  renderStats(filtered);
+}
+
+// Load data
+async function loadAllStats(){
+  const listDiv = document.getElementById('statsList');
+  listDiv.innerHTML = '<p>Tải dữ liệu ...</p>';
+
+  try {
+    const studentsSnap = await getDocs(collection(ez10Db, "studentStats"));
+    if(studentsSnap.empty){
+      listDiv.innerHTML = '<p>Chưa có dữ liệu</p>';
+      return;
+    }
+
+    allSubmissions = [];
+    studentsSnap.forEach(docSnap=>{
+      const s = docSnap.data();
+      s.docId = docSnap.id;
+      kitMap[s.kitCode] = kitMap[s.kitCode] || "Kit " + s.kitCode;
+      allSubmissions.push(s);
+    });
+
+    const kitSelect = document.getElementById("kitFilter");
+    Object.entries(kitMap).forEach(([code,name])=>{
+      const opt = document.createElement("option");
+      opt.value = code; opt.textContent = name;
+      kitSelect.appendChild(opt);
+    });
+
+    renderStats(allSubmissions);
+
+  } catch(err) {
+    console.error(err);
+    listDiv.innerHTML = `<p>❌ Lỗi khi tải dữ liệu: ${err.message}</p>`;
+  }
+}
+
+// Event filter realtime
+document.getElementById('searchName').addEventListener('input', applyFilter);
+document.getElementById('kitFilter').addEventListener('change', applyFilter);
+document.getElementById('homeBtn').addEventListener('click', ()=>window.location.href='main.html');
+
+// Load all stats on page load
+loadAllStats();
+</script>
+
+</body>
+</html>

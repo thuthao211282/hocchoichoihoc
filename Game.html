@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game - Tycoon| hocchoichoi</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<style>
+:root{
+  --primary:#4dabf7; --secondary:#1c7ed6; --success:#37b24d; --danger:#fa5252;
+  --dark-bg:#0a1f40; --light-bg:rgba(30,60,120,0.85); --card-text:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Poppins',sans-serif; background-color:var(--dark-bg);
+  color:var(--card-text); min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; overflow-x:hidden; position:relative;
+}
+body::before{
+  content:""; position:fixed; inset:0;
+  background:url('https://plus.unsplash.com/premium_photo-1701454736122-14b846cfb3c3?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;
+  filter:blur(6px) brightness(0.55); z-index:-2;
+}
+header{
+  background:linear-gradient(135deg,#4dabf7,#1c7ed6); color:white; text-align:center;
+  padding:20px; font-size:28px; font-weight:bold; border-radius:15px; margin-bottom:25px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.3);
+}
+.container{
+  max-width:900px; margin:20px auto; padding:25px 30px; border-radius:20px;
+  background:var(--light-bg); backdrop-filter:blur(8px); box-shadow:0 25px 80px rgba(0,0,0,0.35);
+  width:90%; display:flex; flex-direction:column; align-items:center;
+}
+input[type=text]{
+  width:80%; padding:14px; border-radius:12px; border:none; margin-bottom:16px; font-size:18px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.3); transition:0.3s;
+}
+input[type=text]:focus{ outline:none; transform:scale(1.02); box-shadow:0 6px 25px rgba(0,0,0,0.5);}
+button{
+  cursor:pointer; border:none; border-radius:12px; padding:12px 20px; font-weight:bold;
+  transition:all 0.2s; font-size:16px; background:linear-gradient(135deg,#4dabf7,#1c7ed6); color:#fff;
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
+}
+button:hover{ transform:scale(1.05); box-shadow:0 6px 20px rgba(255,255,255,0.5);}
+#question-area{ font-size:22px; font-weight:bold; margin-top:15px; text-align:center; text-shadow:1px 1px 2px #000; }
+.answer-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:15px; margin:15px 0; width:100%;
+}
+.answer-card{
+  padding:25px; border-radius:15px; font-size:18px; text-align:center; font-weight:bold;
+  color:var(--card-text); cursor:pointer; transition:all 0.3s; box-shadow:0 4px 15px rgba(0,0,0,0.3);
+  display:flex; justify-content:center; align-items:center; gap:10px; word-wrap:break-word;
+  background:linear-gradient(145deg,#4dabf7,#1c7ed6);
+}
+.answer-card:hover{ transform:scale(1.05); box-shadow:0 6px 25px rgba(255,255,255,0.5);}
+.blue{background:#4dabf7;} .green{background:#37b24d;} .red{background:#fa5252;} .yellow{background:#fcc419;}
+.modal{
+  display:flex; position:fixed; inset:0; justify-content:center; align-items:center;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); z-index:9999;
+}
+.modal-content{
+  background:var(--light-bg); padding:35px 45px; border-radius:20px; text-align:left; max-width:500px; width:90%;
+  animation:slideUp 0.4s ease; font-size:18px;
+}
+@keyframes slideUp{ from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+.streak-fire{
+  position:absolute; width:40px; height:40px; background:linear-gradient(to top,#ff4500,#ffcc00);
+  border-radius:50%; animation:fireUp 0.8s ease-out forwards; pointer-events:none;
+}
+@keyframes fireUp{
+  0%{transform:translateY(0) scale(1); opacity:1;}
+  100%{transform:translateY(-120px) scale(0.5); opacity:0;}
+}
+#streak-popup{
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-size:32px; font-weight:bold; padding:25px 40px; border-radius:20px;
+  background:rgba(0,0,0,0.85); color:#fff; z-index:10000; display:none;
+  text-align:center; box-shadow:0 0 25px rgba(255,255,255,0.7);
+}
+.stats-container{ display:flex; justify-content:space-between; width:100%; max-width:900px; margin-bottom:20px; gap:15px; }
+.stat-card{ flex:1; background:rgba(255,255,255,0.1); border-radius:15px; padding:12px 15px; display:flex; flex-direction:column; align-items:center; box-shadow:0 4px 15px rgba(0,0,0,0.3); }
+.stat-icon{ font-size:28px; margin-bottom:8px; color:#fff; text-shadow:1px 1px 3px rgba(0,0,0,0.6); }
+.stat-text{ font-size:16px; margin-bottom:6px; font-weight:bold; color:#fff; text-align:center; }
+.stat-bar{ width:100%; height:28px; background:rgba(255,255,255,0.2); border-radius:14px; overflow:hidden; }
+.stat-fill{ min-width:40px; height:100%; background:#fff; color:#000; font-weight:bold;
+  display:flex; align-items:center; justify-content:center; border-radius:14px; transition:width 0.5s ease; text-align:center; white-space:nowrap;
+}
+#shop {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 95%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: rgba(30, 60, 120, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 25px 30px;
+  z-index: 10000;
+  box-shadow: 0 10px 50px rgba(0,0,0,0.7);
+}
+
+.shop-section {
+  margin-bottom: 25px;
+}
+
+.shop-section h4 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  text-align: left;
+  color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+  padding-bottom: 5px;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.shop-card {
+  position: relative; /* cần để tooltip căn theo card */
+  background: linear-gradient(135deg,#4dabf7,#1c7ed6);
+  color: #fff;
+  padding: 15px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  overflow: visible;
+}
+
+.shop-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(255,255,255,0.5);
+}
+
+/* Tooltip ẩn mặc định */
+.shop-card .tooltip {
+  position: absolute;
+  bottom: 110%; /* hiện phía trên card */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+/* Tooltip hiện khi hover */
+.shop-card:hover .tooltip {
+  opacity: 1;
+}
+
+
+.invest-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.invest-table th,
+.invest-table td {
+  padding: 10px 12px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.invest-table th {
+  background: rgba(255,255,255,0.1);
+}
+
+#closeShopBtn {
+  width: 100%;
+  padding: 14px;
+  font-size: 18px;
+  font-weight: bold;
+  background: linear-gradient(135deg,#fa5252,#ff8787);
+  color: #fff;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+#closeShopBtn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 25px rgba(255,255,255,0.5);
+}
+.correct-hint::after {
+    content: " ✓";
+    color: green;
+    font-weight: bold;
+}
+#snowCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* không chặn click */
+  z-index: 0; /* thấp hơn các card/modals nếu muốn */
+}
+
+
+</style>
+</head>
+<body>
+<canvas id="snowCanvas"></canvas>
+<script>
+const canvas = document.getElementById('snowCanvas');
+const ctx = canvas.getContext('2d');
+
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+
+window.addEventListener('resize', ()=>{
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+});
+
+const numFlakes = 120;
+const flakes = [];
+
+for(let i=0;i<numFlakes;i++){
+    flakes.push({
+        x: Math.random()*W,
+        y: Math.random()*H,
+        r: Math.random()*4+1,
+        speed: Math.random()*1 + 1 // tốc độ rơi
+    });
+}
+
+function drawFlakes(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    for(let i=0;i<numFlakes;i++){
+        const f = flakes[i];
+        ctx.moveTo(f.x,f.y);
+        ctx.arc(f.x,f.y,f.r,0,Math.PI*2,true);
+    }
+    ctx.fill();
+    moveFlakes();
+}
+
+function moveFlakes(){
+    for(let i=0;i<numFlakes;i++){
+        const f = flakes[i];
+        f.y += f.speed;
+
+        if(f.y > H){
+            f.y = -10; // reset lên đầu
+            f.x = Math.random()*W;
+        }
+    }
+}
+
+function animate(){
+    drawFlakes();
+    requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+
+<header>Tycoon - Trò chơi</header>
+<div id="howToPlay" class="modal">
+  <div class="modal-content">
+    <h2>Cách chơi</h2>
+    <p>1. Nhập code và tên</p>
+    <p>2. Trả lời câu hỏi vào shop đầu tư và Upgrade</p>
+    <p>3. Đạt số tiền mục tiêu để chiến thắng</p>
+    <button id="startModalBtn">Bắt đầu thôi</button>
+  </div>
+</div>
+
+<div class="container" id="start-container" style="display:none;">
+  <h3>Điền code và tên</h3>
+  <input type="text" id="playerCode" placeholder="Nhập Code">
+  <input type="text" id="playerName" placeholder="Nhập Tên">
+  <button id="joinGameBtn"><i class="fa-solid fa-play"></i> Tham gia</button>
+</div>
+
+<div class="container" id="game-container" style="display:none;">
+  <div class="stats-container">
+    <div class="stat-card">
+      <i class="fa-solid fa-coins stat-icon"></i>
+      <div class="stat-text">Số tiền</div>
+      <div class="stat-bar"><div id="money" class="stat-fill">0</div></div>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-bullseye stat-icon"></i>
+      <div class="stat-text">Mục tiêu</div>
+      <div class="stat-bar"><div id="targetMoney" class="stat-fill">1000</div></div>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-fire stat-icon"></i>
+      <div class="stat-text">Streak</div>
+      <div class="stat-bar"><div id="streakCount" class="stat-fill">0</div></div>
+    </div>
+  </div>
+
+  <div id="question-area"></div>
+  <div class="answer-grid" id="answer-grid"></div>
+  <button id="openShopBtn"><i class="fa-solid fa-store"></i> Shop</button>
+  <div id="shop" style="display:none;">
+  <h3 style="text-align:center; margin-bottom:20px;">Shop Nâng Cấp</h3>
+
+ <!-- Upgrade -->
+<div class="shop-section" id="upgradeSection">
+  <h4>Upgrade</h4>
+  <div class="shop-grid" id="upgrade-list">
+    <div class="shop-card">
+     Giảm mục tiêu tiền thắng, giá: $100
+      <div class="tooltip">Giảm 100 mục tiêu tiền thắng lên</div>
+    </div>
+    <div class="shop-card">
+       Tăng tốc, giá: $100
+      <div class="tooltip">Tăng streak mỗi câu đúng lên x2</div>
+    </div>
+  </div>
+</div>
+
+<!-- Số tiền mỗi cây hỏi-->
+<div class="shop-section" id="moneyStreakSection">
+  <h4>+Số tiền mỗi cây hỏi</h4>
+  <div class="shop-grid" id="moneyStreak-list">
+    <div class="shop-card">
+      +1 per streak - $50
+      <div class="tooltip">Mỗi streak đúng sẽ thêm +1 tiền</div>
+    </div>
+    <div class="shop-card">
+      +5 per streak - $100
+      <div class="tooltip">Mỗi streak đúng sẽ thêm +5 tiền</div>
+    </div>
+  </div>
+</div>
+
+<!-- Multiplier per streak -->
+<div class="shop-section" id="multiplierSection">
+  <h4>+Số tiền nhân lên mỗi cây hỏi</h4>
+  <div class="shop-grid" id="multiplier-list">
+    <div class="shop-card">
+      x1.5 - $200
+      <div class="tooltip">Nhân tiền mỗi streak đúng 1.5 lần</div>
+    </div>
+    <div class="shop-card">
+      x2 - $400
+      <div class="tooltip">Nhân tiền mỗi streak đúng 2 lần</div>
+    </div>
+  </div>
+</div>
+
+<!-- Insurance -->
+<div class="shop-section" id="insuranceSection">
+  <h4>+Bảo hiểm</h4>
+  <div class="shop-grid" id="insurance-list">
+    <div class="shop-card">
+      Protect streak - $150
+      <div class="tooltip">Bảo vệ streak khi trả lời sai</div>
+    </div>
+    <div class="shop-card">
+      Reduce loss - $300
+      <div class="tooltip">Giảm thiệt hại khi trả lời sai</div>
+    </div>
+  </div>
+</div>
+
+<!-- Powerup -->
+<div class="shop-section" id="powerupSection">
+  <h4>Nâng cấp</h4>
+  <div class="shop-grid" id="powerup-list">
+    <div class="shop-card">
+      Double money - $300
+      <div class="tooltip">Nhân đôi tiền kiếm được trong 15 giây</div>
+    </div>
+    <div class="shop-card">
+      Auto correct - $450
+      <div class="tooltip">Tự động đúng câu trả lời kế tiếp</div>
+    </div>
+  </div>
+</div>
+
+<!-- Invest -->
+<div class="shop-section" id="investSection">
+  <h4>Invest</h4>
+  <table class="invest-table" id="invest-table">
+    <tr>
+      <th>Công ty</th>
+      <th>Giá</th>
+      <th>Mua</th>
+      <th>Bán</th>
+    </tr>
+    <tr>
+      <td>Apple</td>
+      <td id="price-Apple">120</td>
+      <td><button onclick="buyCompany('Apple')">Buy</button></td>
+      <td><button onclick="sellCompany('Apple')">Sell</button></td>
+    </tr>
+    <tr>
+      <td>Microsoft</td>
+      <td id="price-Microsoft">90</td>
+      <td><button onclick="buyCompany('Microsoft')">Buy</button></td>
+      <td><button onclick="sellCompany('Microsoft')">Sell</button></td>
+    </tr>
+    <tr>
+      <td>TikTok</td>
+      <td id="price-TikTok">60</td>
+      <td><button onclick="buyCompany('TikTok')">Buy</button></td>
+      <td><button onclick="sellCompany('TikTok')">Sell</button></td>
+    </tr>
+  </table>
+</div>
+
+
+  <button id="closeShopBtn" style="margin-top:20px;">Đóng Shop</button>
+</div>
+
+
+</div>
+
+<div id="streak-popup"></div>
+
+<div id="endgame-popup" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2>Kết quả trò chơi</h2>
+    <p>Tỉ lệ đúng: <span id="correctRate">0%</span></p>
+    <p>Thời gian chơi: <span id="playTime">0</span> giây</p>
+    <button id="closeEndgameBtn">Đóng</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+// ===== FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyCd7vYlpSMcAlgwOPNBMyOhM0QIuzE-628",
+  authDomain: "thaococo-70cc7.firebaseapp.com",
+  projectId: "thaococo-70cc7",
+  storageBucket: "thaococo-70cc7.appspot.com",
+  messagingSenderId: "289749987059",
+  appId: "1:289749987059:web:5ea067327247588cdc1186",
+  measurementId: "G-RLNVKEF7R4"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// ===== FIREBASE EZ10 =====
+const firebaseConfigez10 = {
+  apiKey: "AIzaSyAJHlNUMvIisbwCjAUQDT6DPNnkuTtKEaQ",
+  authDomain: "ez10-51a9d.firebaseapp.com",
+  projectId: "ez10-51a9d",
+  storageBucket: "ez10-51a9d.firebasestorage.app",
+  messagingSenderId: "1085810670947",
+  appId: "1:1085810670947:web:047775318ed05d9f36a756",
+  measurementId: "G-4CW1EW1064"
+};
+
+const ez10App = firebase.initializeApp(firebaseConfigez10, "ez10App");
+const ez10Db = ez10App.firestore();
+
+
+// ===== STATE =====
+let player = {
+  name: '',
+  money: 0,
+  streak: 0,
+  moneyPerStreak: 0,
+  multiplierPerStreak: 1,
+  insurance: 0,
+  powerupEnd: 0,
+  correct: 0,
+  total: 0
+};
+let questions = [];
+let questionIndex = 0;
+let targetMoney = 1000;
+let startTime = 0;
+
+let companies = ['Apple', 'Microsoft', 'TikTok'];
+let companyPrices = {};
+companies.forEach(c => companyPrices[c] = Math.floor(Math.random() * 100 + 50));
+let playerStocks = {};
+
+// ===== DOM READY =====
+window.addEventListener('DOMContentLoaded', () => {
+
+  const startModalBtn = document.getElementById('startModalBtn');
+  const joinGameBtn = document.getElementById('joinGameBtn');
+  const openShopBtn = document.getElementById('openShopBtn');
+  const closeShopBtn = document.getElementById('closeShopBtn');
+  const closeEndgameBtn = document.getElementById('closeEndgameBtn');
+
+startModalBtn.addEventListener('click', () => {
+    document.getElementById('howToPlay').style.display = 'none';
+    document.getElementById('start-container').style.display = 'flex';
+
+    // --- Thêm nhạc nền ---
+    const bgAudio = new Audio('audio.mp3.mp3'); // file mp3 của bạn trong cùng thư mục
+    bgAudio.loop = true;     // lặp liên tục
+    bgAudio.volume = 0.6;    // âm lượng
+    bgAudio.play().catch(e => console.log("Lỗi autoplay:", e));
+});
+
+
+  joinGameBtn.addEventListener('click', async () => {
+    const name = document.getElementById('playerName').value.trim();
+    const code = document.getElementById('playerCode').value.trim();
+    if (!name || !code) {
+      alert('Nhập tên và code!');
+      return;
+    }
+    player.name = name;
+
+    const kitLoaded = await loadKit(code);
+    if (!kitLoaded) return;
+
+    document.getElementById('start-container').style.display = 'none';
+    document.getElementById('game-container').style.display = 'flex';
+    startTime = Date.now();
+
+    generateQuestion();
+    initShop();
+    startMarketUpdate();
+  });
+
+  openShopBtn.addEventListener('click', () => {
+    const shop = document.getElementById('shop');
+    shop.style.display = shop.style.display === 'block' ? 'none' : 'block';
+  });
+  closeShopBtn.addEventListener('click', () => {
+    document.getElementById('shop').style.display = 'none';
+  });
+  closeEndgameBtn.addEventListener('click', () => {
+    document.getElementById('endgame-popup').style.display = 'none';
+  });
+
+});
+
+// ===== LOAD KIT =====
+let currentKitCode = null; // thêm ở đầu file, cùng phần STATE
+
+async function loadKit(inputCode) {
+    try {
+        const snapshot = await db.collection('kits').get();
+        let foundKit = null;
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (Number(inputCode) === Number(data.assignedCode)) {
+                foundKit = data;
+            }
+        });
+
+        if (!foundKit) {
+            alert('Code không tồn tại!');
+            return false;
+        }
+
+        // Lưu currentKitCode
+        currentKitCode = inputCode; // <-- thêm dòng này
+
+        questions = foundKit.questions || [];
+        targetMoney = foundKit.targetMoney || 1000;
+        questionIndex = 0;
+        updateStats();
+        return true;
+    } catch (err) {
+        console.error(err);
+        alert('Lỗi load kit!');
+        return false;
+    }
+}
+
+// ===== QUESTIONS =====
+function generateQuestion() {
+  if (!questions.length) return;
+  const q = questions[questionIndex];
+  const qArea = document.getElementById('question-area');
+  const grid = document.getElementById('answer-grid');
+  qArea.textContent = `Câu ${questionIndex + 1}: ${q.question}`;
+  grid.innerHTML = '';
+
+  q.choices.forEach((ch, i) => {
+    const card = document.createElement('div');
+    card.className = 'answer-card ' + ['blue', 'green', 'red', 'yellow'][i % 4];
+    card.textContent = ch;
+ // ✅ CHỖ NÀY: nếu người chơi có Auto Correct
+    if (player.upgrades?.autoCorrect) {
+        if (i === q.correctIndex) card.classList.add('correct-hint');
+    }
+   card.addEventListener('click', () => {
+  checkAnswer(i === q.correctIndex); // sửa correctIndexes[0] thành correctIndex
+});
+
+    grid.appendChild(card);
+  });
+}
+
+// ===== CHECK ANSWER =====
+function checkAnswer(correct) {
+  player.total++;
+  const popup = document.getElementById('streak-popup');
+  popup.style.display = 'block';
+  popup.style.fontSize = '28px';
+  popup.style.padding = '15px 25px';
+  popup.style.borderRadius = '15px';
+
+  if (correct) {
+    // ===== ĐÚNG =====
+    player.correct++;
+    if (player.upgrades?.boostSpeedActive) {
+    player.streak += 2; // Bonus
+} else {
+    player.streak += 1;
+};
+
+
+    let earned = (player.streak + player.moneyPerStreak) * player.multiplierPerStreak;
+    player.money += earned;
+
+    popup.textContent = `Correct! +$${Math.round(earned)}`;
+
+    // hiệu ứng streak fire
+    const fire = document.createElement('div');
+    fire.className = 'streak-fire';
+    document.body.appendChild(fire);
+    fire.style.left = (Math.random() * window.innerWidth) + 'px';
+    fire.style.top = (window.innerHeight - 50) + 'px';
+    setTimeout(() => fire.remove(), 800);
+
+  } else {
+
+    // ===== SAI =====
+    if (player.insurance > 0) {
+      player.insurance--;
+      popup.textContent = `Wrong! Streak protected!`;
+
+    } else {
+
+      // ❗ Công thức trừ tiền khi sai
+      // Trừ theo streak hiện tại
+     let penalty = Math.floor(player.streak * 1 + player.moneyPerStreak);
+
+// ✅ Nếu người chơi có Reduce Loss
+if (player.upgrades?.reduceLoss) penalty = Math.floor(penalty * 0.9);
+
+penalty = Math.min(penalty, player.money);
+player.money -= penalty;
+player.streak = 0;
+
+
+      popup.textContent = `Wrong! -$${penalty}`;
+    }
+  }
+
+  setTimeout(() => popup.style.display = 'none', 1400);
+  updateStats();
+
+  // load câu tiếp theo
+  questionIndex++;
+  if (questionIndex >= questions.length) questionIndex = 0;
+  generateQuestion();
+
+  // Check win
+  if (player.money >= targetMoney) endGame();
+}
+
+// ===== END GAME =====
+async function endGame() {
+  const end = document.getElementById('endgame-popup');
+
+  const rate = player.total > 0 ? Math.round(player.correct / player.total * 100) : 0;
+  const playTime = Math.floor((Date.now() - startTime) / 1000);
+
+  document.getElementById('correctRate').textContent = rate + '%';
+  document.getElementById('playTime').textContent = playTime;
+  end.style.display = 'flex';
+
+  try {
+    // Tạo object dữ liệu của 1 lần chơi
+    const submissionData = {
+      username: player.name || 'Guest',
+      kitCode: currentKitCode || 'N/A',
+      score: player.money || 0,
+      correct: player.correct || 0,
+      total: player.total || 0,
+      playTime: playTime,
+      date: new Date().toISOString()
+    };
+
+    // ⬇️ Lưu dạng "mỗi lần chơi = 1 document riêng"
+    await ez10Db.collection('studentStats').add(submissionData);
+
+    console.log('✅ Đã lưu kết quả dưới dạng document mới (không ghi đè)!');
+  } catch (err) {
+    console.error('❌ Lỗi lưu kết quả:', err);
+  }
+}
+
+
+// ===== STATS UPDATE =====
+function updateStats() {
+  const moneyEl = document.getElementById('money');
+  const targetEl = document.getElementById('targetMoney');
+  const streakEl = document.getElementById('streakCount');
+
+  // % tiền so với target hiện tại
+  const moneyPercent = Math.min(player.money / targetMoney * 100, 100);
+  moneyEl.style.width = Math.max(moneyPercent, 5) + '%';
+  moneyEl.textContent = player.money;
+
+  // Thanh target luôn 100% và hiển thị targetMoney
+  targetEl.style.width = '100%';
+  targetEl.textContent = targetMoney;
+
+  // Streak
+  const streakPercent = Math.min(player.streak * 10, 100);
+  streakEl.style.width = streakPercent + '%';
+  streakEl.textContent = player.streak;
+}
+
+
+// ===== SHOP =====
+function initShop() {
+  const upgradeList = document.getElementById('upgrade-list');
+  const moneyStreakList = document.getElementById('moneyStreak-list');
+  const multiplierList = document.getElementById('multiplier-list');
+  const insuranceList = document.getElementById('insurance-list');
+  const powerupList = document.getElementById('powerup-list');
+  const investTable = document.getElementById('invest-table');
+
+  const popup = document.getElementById('streak-popup');
+
+  function showPopup(msg) {
+    popup.style.display = 'block';
+    popup.style.fontSize = '28px';
+    popup.style.padding = '15px 25px';
+    popup.style.borderRadius = '15px';
+    popup.textContent = msg;
+    setTimeout(() => popup.style.display = 'none', 1400);
+  }
+ // ===== Upgrade =====
+upgradeList.innerHTML = '';
+const upgradeItems = [
+  {name:'Reduce Target', price:100, desc:'Giảm 100 mục tiêu tiền thắng xuống'},
+  {name:'Boost Speed', price:200, desc:'Giúp trả lời nhanh hơn, tăng streak'}
+];
+upgradeItems.forEach((item) => {
+  const card = document.createElement('div');
+  card.className = 'shop-card';
+  card.textContent = `${item.name} - $${item.price}`;
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tooltip';
+  tooltip.textContent = item.desc;
+  card.appendChild(tooltip);
+
+  card.addEventListener('click', () => {
+    if (player.money >= item.price) {
+      player.money -= item.price;
+
+      // ✅ Thiết lập Boost Speed active 30s
+      player.upgrades = player.upgrades || {};
+      player.upgrades.boostSpeedActive = true;
+
+      setTimeout(() => {
+          player.upgrades.boostSpeedActive = false;
+          showPopup("⏱ Boost Speed hết hạn!");
+      }, 30000);
+
+      updateStats();
+      showPopup(`Mua ${item.name} thành công! Boost streak +2 trong 30s`);
+    } else {
+      showPopup(`Thiếu tiền! Cần $${item.price}`);
+    }
+  });
+
+  upgradeList.appendChild(card);
+});
+
+
+  // ===== Money per Streak =====
+  moneyStreakList.innerHTML = '';
+  const moneyStreakItems = [
+    {name:'+1 per streak', price:50, desc:'Mỗi streak đúng thêm +1 tiền'},
+    {name:'+5 per streak', price:100, desc:'Mỗi streak đúng thêm +5 tiền'}
+  ];
+  moneyStreakItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'shop-card';
+    card.textContent = `${item.name} - $${item.price}`;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = item.desc;
+    card.appendChild(tooltip);
+
+    card.addEventListener('click', () => {
+      if (player.money >= item.price) {
+        player.money -= item.price;
+        player.moneyPerStreak += item.name.includes('+5') ? 5 : 1;
+        updateStats();
+        showPopup(`Mua ${item.name} thành công!`);
+      } else {
+        showPopup(`Thiếu tiền! Cần $${item.price}`);
+      }
+    });
+    moneyStreakList.appendChild(card);
+  });
+
+  // ===== Multiplier =====
+  multiplierList.innerHTML = '';
+  const multiplierItems = [
+    {name:'x1.5', price:200, desc:'Nhân tiền mỗi streak đúng 1.5 lần'},
+    {name:'x2', price:400, desc:'Nhân tiền mỗi streak đúng 2 lần'}
+  ];
+  multiplierItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'shop-card';
+    card.textContent = `${item.name} - $${item.price}`;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = item.desc;
+    card.appendChild(tooltip);
+
+    card.addEventListener('click', () => {
+      if (player.money >= item.price) {
+        player.money -= item.price;
+        player.multiplierPerStreak = parseFloat(item.name.slice(1));
+        updateStats();
+        showPopup(`Mua ${item.name} thành công!`);
+      } else {
+        showPopup(`Thiếu tiền! Cần $${item.price}`);
+      }
+    });
+    multiplierList.appendChild(card);
+  });
+
+  // ===== Insurance =====
+  insuranceList.innerHTML = '';
+  const insuranceItems = [
+    {name:'Protect streak', price:150, desc:'Bảo vệ streak khi trả lời sai'},
+    {name:'Reduce loss', price:300, desc:'Giảm thiệt hại khi trả lời sai'}
+  ];
+  insuranceItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'shop-card';
+    card.textContent = `${item.name} - $${item.price}`;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = item.desc;
+    card.appendChild(tooltip);
+
+    card.addEventListener('click', () => {
+      if (player.money >= item.price) {
+        player.money -= item.price;
+        player.insurance += 1;
+        updateStats();
+        showPopup(`Mua ${item.name} thành công!`);
+      } else {
+        showPopup(`Thiếu tiền! Cần $${item.price}`);
+      }
+    });
+    insuranceList.appendChild(card);
+  });
+
+  // ===== Powerup =====
+  powerupList.innerHTML = '';
+  const powerupItems = [
+    {name:'Double money', price:300, desc:'Nhân đôi tiền kiếm được trong 15 giây'},
+    {name:'Auto correct', price:450, desc:'Tự động đúng câu trả lời kế tiếp trong 15 giây - sẽ show đáp án trong câu hỏi tiếp theo'}
+  ];
+  powerupItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'shop-card';
+    card.textContent = `${item.name} - $${item.price}`;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = item.desc;
+    card.appendChild(tooltip);
+
+ card.addEventListener('click', () => {
+    if (player.money >= item.price) {
+        player.money -= item.price;
+        player.upgrades = player.upgrades || {};
+        player.upgrades.autoCorrect = true;
+        player.powerupEnd = Date.now() + 15000;
+        setTimeout(() => { player.upgrades.autoCorrect = false; }, 15000);
+
+        updateStats();
+        showPopup(`Mua ${item.name} thành công! Tự động đúng trong 15s`);
+    } else {
+        showPopup(`Thiếu tiền! Cần $${item.price}`);
+    }
+});
+
+    powerupList.appendChild(card);
+  });
+
+  // ===== Invest =====
+  investTable.innerHTML = '<tr><th>Công ty</th><th>Giá</th><th>Mua</th><th>Bán</th></tr>';
+  companies.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c}</td>
+      <td id="price-${c}">${companyPrices[c]}</td>
+      <td><button onclick="buyCompany('${c}')">Buy</button></td>
+      <td><button onclick="sellCompany('${c}')">Sell</button></td>
+    `;
+    investTable.appendChild(tr);
+  });
+}
+function showPopup(msg) {
+  const popup = document.getElementById('streak-popup');
+  popup.style.display = 'block';
+  popup.style.fontSize = '28px';
+  popup.style.padding = '15px 25px';
+  popup.style.borderRadius = '15px';
+  popup.textContent = msg;
+
+  setTimeout(() => popup.style.display = 'none', 1400);
+}
+
+
+// ===== INVEST =====
+// ===== BUY & SELL =====
+function buyCompany(c) {
+  if (!playerStocks[c]) playerStocks[c] = 0;
+  if (player.money >= companyPrices[c]) {
+    player.money -= companyPrices[c];
+    playerStocks[c] += 1;
+    updateStats();
+    showPopup(`✅ Bought 1 share of ${c}!`);
+  } else {
+    showPopup(`❌ Thiếu tiền để mua ${c}!`);
+  }
+}
+
+function sellCompany(c) {
+  if (playerStocks[c] && playerStocks[c] > 0) {
+    player.money += companyPrices[c];
+    playerStocks[c] -= 1;
+    updateStats();
+    showPopup(`✅ Sold 1 share of ${c}!`);
+  } else {
+    showPopup(`❌ Không có cổ phiếu ${c} để bán!`);
+  }
+}
+
+// ===== MARKET UPDATE =====
+const previousPrices = {};
+
+function startMarketUpdate() {
+  // Lưu giá khởi đầu
+  companies.forEach(c => {
+    previousPrices[c] = companyPrices[c];
+    const priceEl = document.getElementById('price-' + c);
+    if (priceEl) {
+      priceEl.style.color = 'green';
+      priceEl.innerHTML = `<b>${companyPrices[c]}</b>`;
+    }
+  });
+
+  setInterval(() => {
+    companies.forEach(c => {
+      const oldPrice = companyPrices[c];
+      const change = Math.floor(Math.random() * 21 - 10); // -10 đến +10
+      companyPrices[c] = Math.max(10, oldPrice + change);
+
+      const priceEl = document.getElementById('price-' + c);
+      if (priceEl) {
+        const diff = companyPrices[c] - previousPrices[c];
+        if (diff > 0) {
+          priceEl.style.color = 'green';
+          priceEl.innerHTML = `<b>${companyPrices[c]} ⬆ (+${diff})</b>`;
+        } else if (diff < 0) {
+          priceEl.style.color = 'red';
+          priceEl.innerHTML = `<b>${companyPrices[c]} ⬇ (${diff})</b>`;
+        } else {
+          priceEl.style.color = 'black';
+          priceEl.innerHTML = `<b>${companyPrices[c]} (0)</b>`;
+        }
+        previousPrices[c] = companyPrices[c];
+      }
+    });
+  }, 5000);
+}
+
+// ===== INIT INVEST TABLE =====
+function initInvestTable() {
+  const investTable = document.getElementById('invest-table');
+  investTable.innerHTML = '<tr><th>Công ty</th><th>Giá</th><th>Mua</th><th>Bán</th></tr>';
+  companies.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c}</td>
+      <td id="price-${c}" style="color:green;"><b>${companyPrices[c]}</b></td>
+      <td><button onclick="buyCompany('${c}')">Buy</button></td>
+      <td><button onclick="sellCompany('${c}')">Sell</button></td>
+    `;
+    investTable.appendChild(tr);
+  });
+}
+
+
+</script>
+
+</body>
+</html>

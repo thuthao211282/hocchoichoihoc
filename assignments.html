@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo bộ câu hỏi | hocchoichoi</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+:root {
+  --primary:#4dabf7; --secondary:#1c7ed6; --success:#37d67a; --danger:#ff4b5c;
+  --light-bg:rgba(255,255,255,0.95); --kit-bg:#f0f0f0; --kit-hover:#e6e6e6;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{min-height:100vh;background:url('https://plus.unsplash.com/premium_photo-1671199781715-550fbda1ca18?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;display:flex;flex-direction:column;align-items:center;animation:fadeIn 0.6s ease;}
+.container{max-width:1100px;margin:50px auto;padding:30px 40px;border-radius:20px;background:var(--light-bg);backdrop-filter:blur(8px);box-shadow:0 15px 50px rgba(0,0,0,0.3);border:2px solid #000;}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:25px;}
+header h1{font-size:28px;font-weight:700;display:flex;align-items:center;gap:10px;}
+header .small{font-size:14px;opacity:0.85;}
+button{cursor:pointer;border:none;border-radius:12px;font-weight:600;padding:10px 16px;display:flex;align-items:center;gap:8px;color:#fff;background:linear-gradient(135deg,var(--primary),var(--secondary));transition:all 0.2s ease;}
+button:hover{transform:scale(1.05);}
+button.warn{background:var(--danger);}
+button.ghost{background: var(--primary);}
+.flex{display:flex;flex-wrap:wrap;gap:30px;}
+.left,.right{flex:1;min-width:360px;}
+.card{background:#fff;border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:0 12px 35px rgba(0,0,0,0.25);border:none;transition:box-shadow 0.2s ease;}
+.kit-row{display:flex;justify-content:space-between;align-items:center;background:var(--kit-bg);border-radius:12px;padding:12px 16px;margin-bottom:12px;box-shadow:0 8px 20px rgba(0,0,0,0.12);transition:0.2s;}
+.kit-row:hover{box-shadow:0 12px 30px rgba(0,0,0,0.18);background:var(--kit-hover);}
+input,select,textarea{width:100%;border:none;border-radius:12px;padding:12px;margin-top:8px;font-size:16px;background:#f5f5f5;color:#000;}
+textarea{min-height:100px;resize:vertical;}
+.choice-item{display:flex;align-items:center;gap:8px;margin-top:6px;}
+.choice-item i{cursor:pointer;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-align:center;line-height:24px;}
+.choice-item.correct i{background:var(--success);color:#fff;}
+.choice-item.incorrect i{background:var(--danger);color:#fff;}
+.choice-item input{flex:1;padding:8px;border-radius:8px;border:1px solid #ccc;}
+.manual-buttons{display:flex;gap:12px;margin-top:8px;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <div>
+    <h1><i class="fa-solid fa-pen-to-square"></i> Create/Edit Kit</h1>
+    <div class="small">Người dùng: <strong id="currentUserDisplay"></strong></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button id="btnDashboard"><i class="fa-solid fa-house"></i> Dashboard</button>
+    <button id="btnReload"><i class="fa-solid fa-rotate-right"></i> Reload</button>
+    <button id="btnSaveKit"><i class="fa-solid fa-save"></i> Save Kit</button>
+  </div>
+</header>
+
+<div class="flex">
+<section class="left">
+  <div class="card">
+    <label for="kitTitle">Tên bộ câu hỏi</label>
+    <input id="kitTitle" placeholder="Điền tên bộ câu hỏi...">
+    <div style="margin-top:10px; display:flex; gap:12px;">
+      <button id="btnToggleManual" class="ghost"><i class="fa-solid fa-hand"></i> Add Manual Question</button>
+      <button id="btnImportFile" class="ghost"><i class="fa-solid fa-file-import"></i> Import from Word</button>
+      <input type="file" id="importFile" style="display:none" accept=".docx">
+    </div>
+    <div id="manualInput" style="display:none; margin-top:16px;">
+      <textarea id="manualQuestion" placeholder="Question text..."></textarea>
+      <div id="manualChoices" style="margin-top:8px;">
+        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Choice A"></div>
+        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Choice B"></div>
+        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Choice C"></div>
+        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Choice D"></div>
+      </div>
+      <div class="manual-buttons">
+        <button id="btnAddManualQuestion"><i class="fa-solid fa-plus"></i> Add Question</button>
+        <button id="btnClearManual" class="ghost"><i class="fa-solid fa-xmark"></i> Clear</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3><i class="fa-solid fa-eye"></i> Preview Questions</h3>
+    <div id="questions" class="small">No questions yet.</div>
+  </div>
+</section>
+
+<section class="right">
+  <div class="card">
+    <h3><i class="fa-solid fa-list"></i> Bộ câu hỏi của tôi</h3>
+    <div id="assignedKits" class="small">CHưa có bộ nào hết.</div>
+  </div>
+</section>
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const $ = id => document.getElementById(id);
+  const firebaseConfig = { apiKey:"AIzaSyCd7vYlpSMcAlgwOPNBMyOhM0QIuzE-628", authDomain:"thaococo-70cc7.firebaseapp.com", projectId:"thaococo-70cc7" };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  
+  // ====== FIX: Lấy currentUser từ Firebase Auth ======
+  let currentUser = null;
+  firebase.auth().onAuthStateChanged(user=>{
+    if(!user){ window.location.href='login.html'; return; }
+    currentUser = user.uid;
+    $('currentUserDisplay').textContent = user.email;
+    loadAssignedKits();
+  });
+
+  let workingQuestions=[], editingIndex=null, currentEditingKitId=null;
+
+  function renderQuestions(){
+    const c=$('questions'); c.innerHTML='';
+    if(!workingQuestions.length){ c.textContent='No questions yet.'; return; }
+    workingQuestions.forEach((q,i)=>{
+      const div=document.createElement('div'); div.className='card';
+      div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="max-width:78%"><div style="font-weight:800">Q${i+1}. ${q.question}</div>
+        <div style="margin-top:8px">${q.choices.map((ch,idx)=>`<div style="margin-top:4px; display:flex; align-items:center;">
+        <span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:${idx===q.correctIndex?'#37d67a':'#ccc'};color:#fff;text-align:center;line-height:24px;">${['A','B','C','D'][idx]}</span> ${ch}</div>`).join('')}</div></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="ghost" data-edit="${i}"><i class="fa-solid fa-pen"></i> Edit</button>
+          <button class="warn" data-delete="${i}"><i class="fa-solid fa-trash"></i> Delete</button>
+        </div>
+      </div>`; c.appendChild(div);
+    });
+  }
+
+  $('btnToggleManual').addEventListener('click', ()=> $('manualInput').style.display = $('manualInput').style.display==='none'?'block':'none');
+  $('btnClearManual').addEventListener('click', ()=>{
+    $('manualQuestion').value=''; document.querySelectorAll('#manualChoices .choice-item').forEach(c=>{c.classList.remove('correct');c.classList.add('incorrect');c.querySelector('i').className='fa-solid fa-xmark';c.querySelector('input').value='';});
+    editingIndex=null;
+  });
+
+  document.querySelectorAll('#manualChoices .choice-item i').forEach((el,idx)=>{
+    el.addEventListener('click', ()=>{
+      const parent = el.parentElement;
+      if(parent.classList.contains('correct')){ parent.classList.remove('correct'); parent.classList.add('incorrect'); el.className='fa-solid fa-xmark'; }
+      else{ parent.classList.remove('incorrect'); parent.classList.add('correct'); el.className='fa-solid fa-check'; }
+    });
+  });
+
+  $('btnAddManualQuestion').addEventListener('click', ()=>{
+    const q = $('manualQuestion').value.trim();
+    const choices = document.querySelectorAll('#manualChoices .choice-item input');
+    if(!q || Array.from(choices).some(c=>!c.value.trim())){ alert('Fill all fields'); return; }
+    const correctIndex = Array.from(document.querySelectorAll('#manualChoices .choice-item')).findIndex(c=>c.classList.contains('correct'));
+    if(correctIndex===-1){ alert('Select correct answer'); return; }
+    const item={question:q, choices:Array.from(choices).map(c=>c.value.trim()), correctIndex};
+    if(editingIndex!==null){ workingQuestions[editingIndex]=item; editingIndex=null; } else{ workingQuestions.push(item); }
+    $('btnClearManual').click(); renderQuestions();
+  });
+
+  $('questions').addEventListener('click', e=>{
+    if(e.target.closest('button[data-edit]')){
+      const i=parseInt(e.target.closest('button[data-edit]').dataset.edit);
+      const q=workingQuestions[i]; $('manualQuestion').value=q.question;
+      document.querySelectorAll('#manualChoices .choice-item').forEach((c,idx)=>{
+        c.querySelector('input').value=q.choices[idx];
+        if(idx===q.correctIndex){c.classList.add('correct');c.classList.remove('incorrect');c.querySelector('i').className='fa-solid fa-check';}
+        else{c.classList.add('incorrect');c.classList.remove('correct');c.querySelector('i').className='fa-solid fa-xmark';}
+      }); editingIndex=i; $('manualInput').style.display='block'; window.scrollTo({top:0,behavior:'smooth'});
+    } else if(e.target.closest('button[data-delete]')){
+      const i=parseInt(e.target.closest('button[data-delete]').dataset.delete);
+      if(confirm('Delete question?')){ workingQuestions.splice(i,1); renderQuestions(); }
+    }
+  });
+
+  $('btnDashboard').addEventListener('click', ()=>window.location.href='main.html');
+  $('btnReload').addEventListener('click', ()=>location.reload());
+
+  // Import Word
+  $('btnImportFile').addEventListener('click', ()=>$('importFile').click());
+  $('importFile').addEventListener('change', async e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({arrayBuffer});
+    const lines = result.value.replace(/\r/g,'').split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+    let qObj=null,newQuestions=[];
+    lines.forEach(line=>{
+      if(/^\d+\.\s/.test(line)){ if(qObj) newQuestions.push(qObj); qObj={question:line.replace(/^\d+\.\s/,'') , choices:[], correctIndex:null}; }
+      else if(/^\*?[A-D]\.\s/.test(line)){
+        const m=line.match(/^(\*?)\s*([A-D])\.\s*(.*)/);
+        if(m && qObj){ const [_,star,ch,text]=m; qObj.choices.push(text.trim()); if(star==='*') qObj.correctIndex=['A','B','C','D'].indexOf(ch); }
+      }
+    });
+    if(qObj) newQuestions.push(qObj);
+    workingQuestions=workingQuestions.concat(newQuestions); renderQuestions();
+    if(!$('kitTitle').value.trim()) $('kitTitle').value=file.name.replace('.docx','');
+    alert(`${newQuestions.length} questions imported!`);
+  });
+
+  // ====== FIX: Gộp 1 listener duy nhất cho assignedKits ======
+  $('assignedKits').addEventListener('click', async e=>{
+    if(e.target.closest('button[data-loadkit]')){
+      const kitId=e.target.closest('button[data-loadkit]').dataset.loadkit;
+      try{
+        const doc=await db.collection('kits').doc(kitId).get();
+        if(!doc.exists){ alert('Not found'); return; }
+        const kit=doc.data();
+        $('kitTitle').value=kit.title; workingQuestions=kit.questions||[]; renderQuestions();
+        currentEditingKitId=kitId;
+      }catch(err){ console.error(err);}
+    } else if(e.target.closest('button[data-deletekit]')){
+      const kitId=e.target.closest('button[data-deletekit]').dataset.deletekit;
+      if(confirm('Delete this kit?')){ await db.collection('kits').doc(kitId).delete(); loadAssignedKits(); }
+    } else if(e.target.closest('button[data-downloadkit]')){
+      const kitId = e.target.closest('button[data-downloadkit]').dataset.downloadkit;
+      try {
+        const doc = await db.collection('kits').doc(kitId).get();
+        if(!doc.exists){ alert('Kit not found'); return; }
+        const kit = doc.data();
+        const content = kit.questions.map((q,i)=> {
+          const lines = [`${i+1}. ${q.question}`];
+          q.choices.forEach((ch,idx)=>{
+            const prefix = idx === q.correctIndex ? '*' : '';
+            const letter = ['A','B','C','D'][idx];
+            lines.push(`${prefix}${letter}. ${ch}`);
+          });
+          return lines.join('\n');
+        }).join('\n\n');
+        const blob = new Blob([content], {type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (kit.title || 'kit') + '.docx';
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch(err){ console.error(err); alert('Download failed'); }
+    }
+  });
+
+  // Check URL edit param
+  const urlParams=new URLSearchParams(window.location.search);
+  const editKitId=urlParams.get('edit');
+  if(editKitId){
+    db.collection('kits').doc(editKitId).get().then(doc=>{
+      if(!doc.exists){ alert('Kit không tồn tại!'); return; }
+      const kit=doc.data();
+      $('kitTitle').value=kit.title||'Untitled Kit';
+      workingQuestions=kit.questions||[];
+      renderQuestions();
+      currentEditingKitId=editKitId;
+    }).catch(err=>{ console.error(err); alert('Load kit thất bại'); });
+  }
+
+  // Save Kit
+  $('btnSaveKit').addEventListener('click', async ()=>{
+    if(!workingQuestions.length){ alert('Add questions'); return; }
+    const title=$('kitTitle').value.trim()||'Untitled Kit';
+    try{
+      if(currentEditingKitId){
+        await db.collection('kits').doc(currentEditingKitId).update({title,questions:workingQuestions,updatedAt:new Date().toISOString()});
+        alert('Cập nhật kit thành công!');
+      } else{
+        await db.collection('kits').add({uid:currentUser,title,questions:workingQuestions,createdAt:new Date().toISOString()});
+        alert('Lưu kit mới thành công!');
+      }
+      workingQuestions=[];$('kitTitle').value=''; renderQuestions(); loadAssignedKits();
+      history.replaceState(null,'','assignments.html'); currentEditingKitId=null;
+    }catch(err){ console.error(err); alert('Lưu thất bại'); }
+  });
+
+  // Load kits khi đăng nhập thành công
+  async function loadAssignedKits(){
+    const out=$('assignedKits'); out.textContent='Loading...';
+    try{
+      const snapshot=await db.collection('kits').where('uid','==',currentUser).orderBy('createdAt','desc').get();
+      if(snapshot.empty){ out.textContent='No kits yet.'; return; }
+      out.innerHTML='';
+      snapshot.docs.forEach(doc=>{
+        const kit=doc.data(); const div=document.createElement('div'); div.className='kit-row';
+        div.innerHTML=`<div>${kit.title||'Untitled Kit'}</div>
+        <div style="display:flex;gap:6px">
+          <button data-loadkit="${doc.id}" class="ghost"><i class="fa-solid fa-arrow-up-right-from-square"></i> Load</button>
+          <button data-downloadkit="${doc.id}" class="ghost"><i class="fa-solid fa-download"></i> Download</button>
+          <button data-deletekit="${doc.id}" class="warn"><i class="fa-solid fa-trash"></i> Delete</button>
+        </div>`;
+        out.appendChild(div);
+      });
+    }catch(err){ console.error(err); out.textContent='Failed to load kits'; }
+  }
+
+});
+</script>
+</body>
+</html>

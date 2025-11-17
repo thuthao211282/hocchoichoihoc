@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up | Thaococo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<style>
+body { font-family: 'Poppins', sans-serif; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background: url('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat fixed;}
+body::before{content:""; position:fixed; inset:0; backdrop-filter: blur(8px); background: rgba(0,0,50,0.35); z-index:-1;}
+.container{background: rgba(255,255,255,0.15); backdrop-filter: blur(12px); border-radius:20px; padding:40px 30px; width:90%; max-width:400px; box-shadow:0 10px 35px rgba(0,0,0,0.35); text-align:center; display:flex; flex-direction:column; gap:20px;}
+header{font-size:28px;font-weight:bold;color:#4dabf7;text-shadow:1px 1px 3px rgba(0,0,0,0.5);}
+input, button{width:100%; padding:14px; border-radius:12px; border:none; font-size:16px; transition:all 0.2s; box-sizing:border-box;}
+input{background: rgba(255,255,255,0.25); color:#fff; text-align:center;}
+input::placeholder{color:#e0f0ff;}
+input:focus{outline:none; background: rgba(255,255,255,0.35); box-shadow: 0 0 12px rgba(77,171,247,0.7);}
+button{font-size:18px;font-weight:bold; cursor:pointer; color:white; background: linear-gradient(135deg, #4dabf7, #1c7ed6); display:flex; align-items:center; justify-content:center; gap:8px;}
+button:hover{transform:scale(1.05); box-shadow:0 6px 20px rgba(0,123,255,0.6);}
+/* Nút chính: Tiếp tục */
+button.primary {
+  background: linear-gradient(135deg, #4dabf7, #1c7ed6);
+  color: #fff;
+}
+button.primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(77,171,247,0.7);
+}
+
+/* Nút Google */
+button.google {
+  background: linear-gradient(135deg, #fa5252, #ff8787);
+  color: #fff;
+}
+button.google:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(250,82,82,0.7);
+}
+
+/* Nút secondary: đăng nhập */
+button.secondary {
+  background: linear-gradient(135deg, #6c757d, #adb5bd);
+  color: #fff;
+}
+button.secondary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(108,117,125,0.7);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <header><i class="fa-solid fa-user-plus"></i> Tạo tài khoản</header>
+
+    <input id="username" type="text" placeholder="Tên người dùng">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Mật khẩu">
+
+<button class="primary" onclick="signupWithEmail()">
+  <i class="fa-solid fa-check"></i> Tiếp tục
+</button>
+
+<button class="google" onclick="signupWithGoogle()">
+  <i class="fa-brands fa-google"></i> Tiếp tục với Google
+</button>
+
+<button class="secondary" onclick="window.location.href='login.html'">
+  <i class="fa-solid fa-arrow-left"></i> Đăng nhập
+</button>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCd7vYlpSMcAlgwOPNBMyOhM0QIuzE-628",
+  authDomain: "thaococo-70cc7.firebaseapp.com",
+  projectId: "thaococo-70cc7",
+  storageBucket: "thaococo-70cc7.appspot.com",
+  messagingSenderId: "289749987059",
+  appId: "1:289749987059:web:5ea067327247588cdc1186",
+  measurementId: "G-RLNVKEF7R4"
+};
+
+// Init Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// Hàm sync user Firestore
+async function syncUser(uid, username, email){
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    if(!userSnap.exists()){
+        await setDoc(userRef, { username, email, createdAt: new Date().toISOString() });
+    }
+}
+
+// Signup bằng Email/Password
+async function signupWithEmail() {
+  const username = document.getElementById("username").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  if (!username || !email || !password) { alert("❌ Hoàn thành tất cả mục!"); return; }
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    await syncUser(user.uid, username, email);
+
+    localStorage.setItem('loggedInUser', username);
+    alert(`✅ Tạo tài khoản thành công, chào mừng ${username}!`);
+    window.location.href = "main.html";
+  } catch(error) {
+    console.error(error);
+    alert("❌ Lỗi: " + error.message);
+  }
+}
+
+// Signup/Login với Google
+async function signupWithGoogle() {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    const username = user.displayName || user.email.split("@")[0];
+
+    await syncUser(user.uid, username, user.email);
+
+    localStorage.setItem('loggedInUser', username);
+    alert(`✅ Chào mừng, ${username}!`);
+    window.location.href = "main.html";
+  } catch(error) {
+    console.error(error);
+    alert("❌ Lỗi: " + error.message);
+  }
+}
+
+window.signupWithEmail = signupWithEmail;
+window.signupWithGoogle = signupWithGoogle;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ôn Flashcard | hocchoichoi</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<style>
+:root { --primary: #4dabf7; --accent: #1971c2; --bg-light: #f8f9fc; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg-light);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  color:#222;
+}
+body::before {
+  content:"";
+  position:fixed; inset:0;
+  background:url('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+  filter:blur(6px) brightness(0.6);
+  z-index:-1;
+}
+header {
+  width:100%;
+  background: var(--primary);
+  color:#fff;
+  text-align:center;
+  padding:18px;
+  font-size:26px;
+  font-weight:600;
+  box-shadow:0 2px 10px rgba(0,0,0,0.3);
+}
+.container {
+  background: rgba(255,255,255,0.92);
+  border-radius: 25px;
+  width:90%;
+  max-width:600px;
+  padding:40px;
+  text-align:center;
+}
+.flashcard { perspective:1000px; margin:25px 0; }
+.card {
+  width:100%;
+  height:300px;
+  border-radius:20px;
+  background:white;
+  box-shadow:0 10px 40px rgba(0,0,0,0.25);
+  position:relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s ease;
+  cursor:pointer;
+}
+.card.flipped { transform:rotateY(180deg); }
+.card-face {
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:25px;
+  font-size:22px;
+  font-weight:500;
+  text-align:center;
+  line-height:1.6;
+}
+.front { background:#fff; color:#212529; }
+.back { background:#fff; color:var(--accent); transform:rotateY(180deg); }
+.flip-hint { font-size:16px; color:#444; margin-top:10px; animation: pulse 2s infinite; }
+.controls {
+  display:flex;
+  justify-content:space-between;
+  margin-top:30px;
+  flex-wrap:wrap;
+  gap:12px;
+}
+button {
+  background: var(--primary);
+  color:#fff;
+  border:none;
+  padding:12px 20px;
+  border-radius:12px;
+  font-size:17px;
+  cursor:pointer;
+  transition: transform 0.2s;
+}
+button:hover { transform:scale(1.05); }
+button:disabled { opacity:0.6; cursor:not-allowed; }
+#backBtn { background:#868e96; }
+#mainBtn { width:100%; background:#1c7ed6; margin-top:25px; font-weight:600; }
+.counter { font-size:17px; font-weight:600; margin-top:8px; }
+@keyframes pulse {0%,100% {opacity:0.7; transform: scale(1);} 50% {opacity:1; transform: scale(1.05);}}
+</style>
+</head>
+<body>
+<header>Ôn flashcard</header>
+<div class="container">
+  <div class="flashcard">
+    <div class="card" id="flashCard">
+      <div class="card-face front" id="frontText">Mặt trước</div>
+      <div class="card-face back" id="backText">Mặt sau</div>
+    </div>
+  </div>
+  <div class="flip-hint"><i class="fa-solid fa-lightbulb"></i> 💡 Nhấn trực tiếp vào thẻ để lật thẻ</div>
+  <div class="counter" id="counter"></div>
+  <div class="controls">
+    <button id="prevBtn"><i class="fa-solid fa-arrow-left"></i> Lùi về</button>
+    <button id="nextBtn">Tiếp tục <i class="fa-solid fa-arrow-right"></i></button>
+  </div>
+  <button id="mainBtn" onclick="goBack()"><i class="fa-solid fa-house"></i> Về lại trang chủ</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCd7vYlpSMcAlgwOPNBMyOhM0QIuzE-628",
+  authDomain: "thaococo-70cc7.firebaseapp.com",
+  projectId: "thaococo-70cc7",
+  storageBucket: "thaococo-70cc7.appspot.com",
+  messagingSenderId: "289749987059",
+  appId: "1:289749987059:web:5ea067327247588cdc1186",
+  measurementId: "G-RLNVKEF7R4"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Lấy kitId từ URL
+function getQueryParam(param){
+  return new URLSearchParams(window.location.search).get(param);
+}
+const reviewKitId = getQueryParam('kit');
+let questions = [];
+let index = 0;
+let flipped = false;
+
+// Load dữ liệu từ Firestore
+async function loadKit(){
+  if(!reviewKitId){
+    alert("❌ Không tìm thấy bộ câu hỏi!");
+    window.location.href="main.html";
+    return;
+  }
+
+  try{
+    const doc = await db.collection('kits').doc(reviewKitId).get();
+    if(!doc.exists){
+      alert("❌ Bộ câu hỏi không tồn tại!");
+      window.location.href="main.html";
+      return;
+    }
+
+    const data = doc.data();
+    if(!data.questions || !data.questions.length){
+      alert("❌ Bộ câu hỏi trống!");
+      window.location.href="main.html";
+      return;
+    }
+
+    questions = data.questions.map(q => {
+      let ansText = "";
+      if (q.correctIndex !== undefined && q.choices) {
+        ansText = q.choices[q.correctIndex];
+      } else {
+        ansText = "❌ Không có đáp án.";
+      }
+      return { question: q.question || " ❌ Câu hỏi trống", answer: ansText };
+    });
+
+    showCard();
+  }catch(err){
+    console.error(err);
+    alert("❌ Load bộ câu hỏi thất bại");
+  }
+}
+
+function showCard(){
+  const q = questions[index];
+  document.getElementById("frontText").textContent = q.question;
+  document.getElementById("backText").textContent = "💡 " + q.answer;
+  document.getElementById("counter").textContent = `Thẻ ${index+1} / ${questions.length}`;
+  document.getElementById("prevBtn").disabled = index===0;
+  document.getElementById("nextBtn").disabled = index===questions.length-1;
+}
+
+// Flip card khi click
+const card = document.getElementById("flashCard");
+card.addEventListener("click", ()=>{
+  flipped = !flipped;
+  card.classList.toggle("flipped");
+});
+
+function goBack(){ window.location.href="main.html"; }
+
+function nextCard(){
+  if(index < questions.length -1){
+    if(flipped){ card.classList.remove("flipped"); flipped=false; setTimeout(()=>{index++; showCard();},400);}
+    else { card.classList.add("flipped"); setTimeout(()=>{card.classList.remove("flipped"); index++; showCard();},400);}
+  }
+}
+
+function prevCard(){
+  if(index > 0){
+    if(flipped){ card.classList.remove("flipped"); flipped=false; setTimeout(()=>{index--; showCard();},400);}
+    else { card.classList.add("flipped"); setTimeout(()=>{card.classList.remove("flipped"); index--; showCard();},400);}
+  }
+}
+
+// Event listeners cho button
+document.getElementById("nextBtn").addEventListener("click", nextCard);
+document.getElementById("prevBtn").addEventListener("click", prevCard);
+
+// Chỉ load kit khi đã login
+window.addEventListener("DOMContentLoaded", ()=> {
+  firebase.auth().onAuthStateChanged(user => {
+    if(user){
+      loadKit();
+    } else {
+      alert("Bạn cần đăng nhập để xem bộ câu hỏi!");
+      window.location.href="main.html";
+    }
+  });
+});
+</script>
+</body>
+</html>
