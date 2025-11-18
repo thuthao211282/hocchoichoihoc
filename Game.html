@@ -754,8 +754,7 @@ function initShop() {
  // ===== Upgrade =====
 upgradeList.innerHTML = '';
 const upgradeItems = [
-  {name:'Reduce Target', price:100, desc:'Giảm 100 mục tiêu tiền thắng xuống'},
-  {name:'Boost Speed', price:200, desc:'Giúp trả lời nhanh hơn, tăng streak'}
+    {name:'Boost Speed', price:200, desc:'Giúp trả lời nhanh hơn, tăng streak'}
 ];
 upgradeItems.forEach((item) => {
   const card = document.createElement('div');
@@ -769,8 +768,7 @@ upgradeItems.forEach((item) => {
   card.addEventListener('click', () => {
     if (player.money >= item.price) {
       player.money -= item.price;
-
-      // ✅ Thiết lập Boost Speed active 30s
+     // ✅ Thiết lập Boost Speed active 30s
       player.upgrades = player.upgrades || {};
       player.upgrades.boostSpeedActive = true;
 
@@ -814,7 +812,7 @@ upgradeItems.forEach((item) => {
       } else {
         showPopup(`Thiếu tiền! Cần $${item.price}`);
       }
-    });
+      });
     moneyStreakList.appendChild(card);
   });
 
@@ -878,7 +876,7 @@ upgradeItems.forEach((item) => {
   powerupList.innerHTML = '';
   const powerupItems = [
     {name:'Double money', price:300, desc:'Nhân đôi tiền kiếm được trong 15 giây'},
-    {name:'Auto correct', price:450, desc:'Tự động đúng câu trả lời kế tiếp trong 15 giây - sẽ show đáp án trong câu hỏi tiếp theo'}
+    {name:'Auto correct', price:450, desc:'Đáp án đúng câu trả lời kế tiếp trong 15 giây'}
   ];
   powerupItems.forEach(item => {
     const card = document.createElement('div');
