@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game - Tycoon| hocchoichoi</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<title>Game - Tycoon| hocchoichoihoc</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <style>
 :root{
   --primary:#4dabf7; --secondary:#1c7ed6; --success:#37b24d; --danger:#fa5252;
@@ -319,7 +319,7 @@ animate();
 
  <!-- Upgrade -->
 <div class="shop-section" id="upgradeSection">
-  <h4>Upgrade</h4>
+  <h4>+Nâng cấp</h4>
   <div class="shop-grid" id="upgrade-list">
     <div class="shop-card">
      Giảm mục tiêu tiền thắng, giá: $100
@@ -379,7 +379,7 @@ animate();
 
 <!-- Powerup -->
 <div class="shop-section" id="powerupSection">
-  <h4>Nâng cấp</h4>
+  <h4>Tăng sức mạnh</h4>
   <div class="shop-grid" id="powerup-list">
     <div class="shop-card">
       Double money - $300
@@ -394,7 +394,7 @@ animate();
 
 <!-- Invest -->
 <div class="shop-section" id="investSection">
-  <h4>Invest</h4>
+  <h4>Đầu tư</h4>
   <table class="invest-table" id="invest-table">
     <tr>
       <th>Công ty</th>
@@ -564,7 +564,7 @@ async function loadKit(inputCode) {
         });
 
         if (!foundKit) {
-            alert('Code không tồn tại!');
+            alert('⚠️ Code không tồn tại!');
             return false;
         }
 
@@ -578,34 +578,42 @@ async function loadKit(inputCode) {
         return true;
     } catch (err) {
         console.error(err);
-        alert('Lỗi load kit!');
+        alert('⚠️ Lỗi load kit!');
         return false;
     }
 }
 
 // ===== QUESTIONS =====
 function generateQuestion() {
-  if (!questions.length) return;
-  const q = questions[questionIndex];
-  const qArea = document.getElementById('question-area');
-  const grid = document.getElementById('answer-grid');
-  qArea.textContent = `Câu ${questionIndex + 1}: ${q.question}`;
-  grid.innerHTML = '';
+    if (!questions.length) return;
 
-  q.choices.forEach((ch, i) => {
-    const card = document.createElement('div');
-    card.className = 'answer-card ' + ['blue', 'green', 'red', 'yellow'][i % 4];
-    card.textContent = ch;
- // ✅ CHỖ NÀY: nếu người chơi có Auto Correct
-    if (player.upgrades?.autoCorrect) {
-        if (i === q.correctIndex) card.classList.add('correct-hint');
-    }
-   card.addEventListener('click', () => {
-  checkAnswer(i === q.correctIndex); // sửa correctIndexes[0] thành correctIndex
-});
+    const q = questions[questionIndex];
+    const qArea = document.getElementById('question-area');
+    const grid = document.getElementById('answer-grid');
 
-    grid.appendChild(card);
-  });
+    qArea.textContent = `Câu ${questionIndex + 1}: ${q.question}`;
+    grid.innerHTML = '';
+
+    const labels = ["A", "B", "C", "D"];
+
+    q.choices.forEach((ch, i) => {
+        const card = document.createElement('div');
+        card.className = 'answer-card ' + ['blue', 'green', 'red', 'yellow'][i % 4];
+
+        // 👉 Gắn A/B/C/D
+        card.textContent = `${labels[i]}. ${ch}`;
+
+        // 👉 Auto Correct (nếu có)
+        if (player.upgrades?.autoCorrect && i === q.correctIndex) {
+            card.classList.add('correct-hint');
+        }
+
+        card.addEventListener('click', () => {
+            checkAnswer(i === q.correctIndex);
+        });
+
+        grid.appendChild(card);
+    });
 }
 
 // ===== CHECK ANSWER =====
@@ -705,32 +713,35 @@ async function endGame() {
 
     console.log('✅ Đã lưu kết quả dưới dạng document mới (không ghi đè)!');
   } catch (err) {
-    console.error('❌ Lỗi lưu kết quả:', err);
+    console.error('⚠️ Lỗi lưu kết quả:', err);
   }
 }
 
 
 // ===== STATS UPDATE =====
 function updateStats() {
+
   const moneyEl = document.getElementById('money');
   const targetEl = document.getElementById('targetMoney');
   const streakEl = document.getElementById('streakCount');
 
-  // % tiền so với target hiện tại
-  const moneyPercent = Math.min(player.money / targetMoney * 100, 100);
+  // % tiền so với target mới
+  const moneyPercent = Math.min((player.money / targetMoney) * 100, 100);
   moneyEl.style.width = Math.max(moneyPercent, 5) + '%';
   moneyEl.textContent = player.money;
 
-  // Thanh target luôn 100% và hiển thị targetMoney
-  targetEl.style.width = '100%';
-  targetEl.textContent = targetMoney;
+  // 🔥 HIỂN THỊ TARGET CHÍNH XÁC
+  targetEl.style.width = '100%';        // thanh background vẫn full
+  targetEl.textContent = '🎯 ' + targetMoney;   // Thêm icon + rõ ràng hơn
+  targetEl.style.display = 'flex';      // bảo đảm text không bị ẩn
+  targetEl.style.justifyContent = 'center';
+  targetEl.style.alignItems = 'center';
 
   // Streak
   const streakPercent = Math.min(player.streak * 10, 100);
   streakEl.style.width = streakPercent + '%';
-  streakEl.textContent = player.streak;
+  streakEl.textContent = '🔥' + player.streak;
 }
-
 
 // ===== SHOP =====
 function initShop() {
@@ -754,7 +765,8 @@ function initShop() {
  // ===== Upgrade =====
 upgradeList.innerHTML = '';
 const upgradeItems = [
-    {name:'Boost Speed', price:200, desc:'Giúp trả lời nhanh hơn, tăng streak'}
+  {name:'Giảm mục tiêu', price:100, desc:'Giảm 100 mục tiêu tiền thắng xuống'},
+  {name:'Tăng tốc', price:200, desc:'Tăng streak +2 trong 30 giây'}
 ];
 upgradeItems.forEach((item) => {
   const card = document.createElement('div');
@@ -765,24 +777,37 @@ upgradeItems.forEach((item) => {
   tooltip.textContent = item.desc;
   card.appendChild(tooltip);
 
-  card.addEventListener('click', () => {
-    if (player.money >= item.price) {
-      player.money -= item.price;
-     // ✅ Thiết lập Boost Speed active 30s
+ card.addEventListener('click', () => {
+  if (player.money >= item.price) {
+    player.money -= item.price;
+
+    if (item.name === 'Reduce Target') {
+      // 🔥 Giảm targetMoney đúng 100
+      targetMoney = Math.max(100, targetMoney - 100);
+      updateStats();
+      showPopup('🎯 Đã giảm mục tiêu xuống còn: ' + targetMoney);
+      return;
+    }
+
+    if (item.name === 'Boost Speed') {
       player.upgrades = player.upgrades || {};
       player.upgrades.boostSpeedActive = true;
 
       setTimeout(() => {
-          player.upgrades.boostSpeedActive = false;
-          showPopup("⏱ Boost Speed hết hạn!");
+        player.upgrades.boostSpeedActive = false;
+        showPopup("⏱ Boost Speed hết hạn!");
       }, 30000);
 
       updateStats();
-      showPopup(`Mua ${item.name} thành công! Boost streak +2 trong 30s`);
-    } else {
-      showPopup(`Thiếu tiền! Cần $${item.price}`);
+      showPopup('⚡ Boost Speed đã kích hoạt 30s');
+      return;
     }
-  });
+
+  } else {
+    showPopup(`Thiếu tiền! Cần $${item.price}`);
+  }
+});
+
 
   upgradeList.appendChild(card);
 });
@@ -791,8 +816,8 @@ upgradeItems.forEach((item) => {
   // ===== Money per Streak =====
   moneyStreakList.innerHTML = '';
   const moneyStreakItems = [
-    {name:'+1 per streak', price:50, desc:'Mỗi streak đúng thêm +1 tiền'},
-    {name:'+5 per streak', price:100, desc:'Mỗi streak đúng thêm +5 tiền'}
+    {name:'+1 mỗi streak', price:50, desc:'Mỗi streak đúng thêm +1 tiền'},
+    {name:'+5 mỗi streak', price:100, desc:'Mỗi streak đúng thêm +5 tiền'}
   ];
   moneyStreakItems.forEach(item => {
     const card = document.createElement('div');
@@ -812,7 +837,7 @@ upgradeItems.forEach((item) => {
       } else {
         showPopup(`Thiếu tiền! Cần $${item.price}`);
       }
-      });
+    });
     moneyStreakList.appendChild(card);
   });
 
@@ -847,8 +872,8 @@ upgradeItems.forEach((item) => {
   // ===== Insurance =====
   insuranceList.innerHTML = '';
   const insuranceItems = [
-    {name:'Protect streak', price:150, desc:'Bảo vệ streak khi trả lời sai'},
-    {name:'Reduce loss', price:300, desc:'Giảm thiệt hại khi trả lời sai'}
+    {name:'Bảo vệ streak', price:150, desc:'Bảo vệ streak khi trả lời sai'},
+    {name:'Bảo hiểm tiền', price:300, desc:'Giảm thiệt hại 10% khi trả lời sai'}
   ];
   insuranceItems.forEach(item => {
     const card = document.createElement('div');
@@ -875,8 +900,8 @@ upgradeItems.forEach((item) => {
   // ===== Powerup =====
   powerupList.innerHTML = '';
   const powerupItems = [
-    {name:'Double money', price:300, desc:'Nhân đôi tiền kiếm được trong 15 giây'},
-    {name:'Auto correct', price:450, desc:'Đáp án đúng câu trả lời kế tiếp trong 15 giây'}
+    {name:'X2 tiền', price:300, desc:'Nhân đôi tiền kiếm được trong 15 giây'},
+    {name:'Gợi ý đáp án', price:450, desc:'Đáp án đúng câu trả lời kế tiếp trong 15 giây'}
   ];
   powerupItems.forEach(item => {
     const card = document.createElement('div');
@@ -912,8 +937,8 @@ upgradeItems.forEach((item) => {
     tr.innerHTML = `
       <td>${c}</td>
       <td id="price-${c}">${companyPrices[c]}</td>
-      <td><button onclick="buyCompany('${c}')">Buy</button></td>
-      <td><button onclick="sellCompany('${c}')">Sell</button></td>
+      <td><button onclick="buyCompany('${c}')">Mua</button></td>
+      <td><button onclick="sellCompany('${c}')">Bán</button></td>
     `;
     investTable.appendChild(tr);
   });
@@ -938,7 +963,7 @@ function buyCompany(c) {
     player.money -= companyPrices[c];
     playerStocks[c] += 1;
     updateStats();
-    showPopup(`✅ Bought 1 share of ${c}!`);
+    showPopup(`✅ Mua cổ phiếu ${c}!`);
   } else {
     showPopup(`❌ Thiếu tiền để mua ${c}!`);
   }
@@ -949,7 +974,7 @@ function sellCompany(c) {
     player.money += companyPrices[c];
     playerStocks[c] -= 1;
     updateStats();
-    showPopup(`✅ Sold 1 share of ${c}!`);
+    showPopup(`✅ Bán cổ phiếu ${c}!`);
   } else {
     showPopup(`❌ Không có cổ phiếu ${c} để bán!`);
   }
@@ -972,7 +997,7 @@ function startMarketUpdate() {
   setInterval(() => {
     companies.forEach(c => {
       const oldPrice = companyPrices[c];
-      const change = Math.floor(Math.random() * 21 - 10); // -10 đến +10
+   const change = Math.floor(Math.random() * 201 - 100); // -100 đến +100
       companyPrices[c] = Math.max(10, oldPrice + change);
 
       const priceEl = document.getElementById('price-' + c);
@@ -1003,8 +1028,8 @@ function initInvestTable() {
     tr.innerHTML = `
       <td>${c}</td>
       <td id="price-${c}" style="color:green;"><b>${companyPrices[c]}</b></td>
-      <td><button onclick="buyCompany('${c}')">Buy</button></td>
-      <td><button onclick="sellCompany('${c}')">Sell</button></td>
+      <td><button onclick="buyCompany('${c}')">Mua</button></td>
+      <td><button onclick="sellCompany('${c}')">Bán</button></td>
     `;
     investTable.appendChild(tr);
   });
@@ -1015,3 +1040,4 @@ function initInvestTable() {
 
 </body>
 </html>
+
