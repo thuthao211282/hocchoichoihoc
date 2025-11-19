@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ôn Flashcard | hocchoichoi</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<title>Ôn Flashcard | hocchoichoihoc</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <style>
 :root { --primary: #4dabf7; --accent: #1971c2; --bg-light: #f8f9fc; }
 * { box-sizing:border-box; margin:0; padding:0; }
@@ -107,7 +107,7 @@ button:disabled { opacity:0.6; cursor:not-allowed; }
       <div class="card-face back" id="backText">Mặt sau</div>
     </div>
   </div>
-  <div class="flip-hint"><i class="fa-solid fa-lightbulb"></i> 💡 Nhấn trực tiếp vào thẻ để lật thẻ</div>
+  <div class="flip-hint"><i class="fa-solid fa-lightbulb"></i> Nhấn trực tiếp vào thẻ để lật thẻ</div>
   <div class="counter" id="counter"></div>
   <div class="controls">
     <button id="prevBtn"><i class="fa-solid fa-arrow-left"></i> Lùi về</button>
@@ -146,7 +146,7 @@ let flipped = false;
 // Load dữ liệu từ Firestore
 async function loadKit(){
   if(!reviewKitId){
-    alert("❌ Không tìm thấy bộ câu hỏi!");
+    alert("⚠️ Không tìm thấy bộ câu hỏi!");
     window.location.href="main.html";
     return;
   }
@@ -154,14 +154,14 @@ async function loadKit(){
   try{
     const doc = await db.collection('kits').doc(reviewKitId).get();
     if(!doc.exists){
-      alert("❌ Bộ câu hỏi không tồn tại!");
+      alert("⚠️ Bộ câu hỏi không tồn tại!");
       window.location.href="main.html";
       return;
     }
 
     const data = doc.data();
     if(!data.questions || !data.questions.length){
-      alert("❌ Bộ câu hỏi trống!");
+      alert("⚠️ Bộ câu hỏi trống!");
       window.location.href="main.html";
       return;
     }
@@ -171,15 +171,15 @@ async function loadKit(){
       if (q.correctIndex !== undefined && q.choices) {
         ansText = q.choices[q.correctIndex];
       } else {
-        ansText = "❌ Không có đáp án.";
+        ansText = "⚠️ Không có đáp án.";
       }
-      return { question: q.question || " ❌ Câu hỏi trống", answer: ansText };
+      return { question: q.question || "⚠️ Câu hỏi trống", answer: ansText };
     });
 
     showCard();
   }catch(err){
     console.error(err);
-    alert("❌ Load bộ câu hỏi thất bại");
+    alert("⚠️ Load bộ câu hỏi thất bại");
   }
 }
 
@@ -225,7 +225,7 @@ window.addEventListener("DOMContentLoaded", ()=> {
     if(user){
       loadKit();
     } else {
-      alert("Bạn cần đăng nhập để xem bộ câu hỏi!");
+      alert("⚠️ Bạn cần đăng nhập để xem bộ câu hỏi!");
       window.location.href="main.html";
     }
   });
