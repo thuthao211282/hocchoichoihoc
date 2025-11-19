@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trang Chủ | hocchoichoi</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <style>
 :root {
   --primary: #4dabf7;
@@ -201,13 +201,27 @@ let currentUser = null;
 let currentKitId = null;
 
 // Check login
-auth.onAuthStateChanged(user=>{
-  if(user){
+auth.onAuthStateChanged(async user => {
+  if (user) {
     currentUser = user.uid; // chỉ lưu UID
-    document.getElementById("displayUsername").textContent = user.email;
+    
+    try {
+      // Lấy username từ Firestore
+      const docRef = db.collection('users').doc(user.uid);
+      const docSnap = await docRef.get();
+      let username = user.email.split("@")[0]; // fallback nếu chưa có username
+      if (docSnap.exists) {
+        username = docSnap.data().username || username;
+      }
+      document.getElementById("displayUsername").textContent = username;
+    } catch(err) {
+      console.error(err);
+      document.getElementById("displayUsername").textContent = user.email; // fallback
+    }
+
     loadMyKits();
-  }else{
-    alert("Bạn phải đăng nhập trước!");
+  } else {
+    alert("⚠️ Bạn phải đăng nhập trước!");
     window.location.href="login.html";
   }
 });
@@ -224,7 +238,7 @@ async function loadMyKits(){
       .where('uid','==',currentUser)
       .orderBy('createdAt','desc')
       .get();
-    if(snapshot.empty){ out.textContent='chưa có bộ câu hỏi nào.'; return; }
+    if(snapshot.empty){ out.textContent='⚠️ chưa có bộ câu hỏi nào.'; return; }
 
     out.innerHTML='';
     snapshot.forEach(doc=>{
@@ -246,16 +260,16 @@ async function loadMyKits(){
       `;
       out.appendChild(row);
     });
-  }catch(err){ console.error(err); out.textContent='Load kits thất bại'; }
+  }catch(err){ console.error(err); out.textContent='⚠️ Load kits thất bại'; }
 }
 
 // Delete kit
 async function deleteKit(kitId){
-  if(!confirm('Xóa bộ câu hỏi này vĩnh viễn?')) return;
+  if(!confirm('⚠️ Xóa bộ câu hỏi này vĩnh viễn?')) return;
   try{
     await db.collection('kits').doc(kitId).delete();
     loadMyKits();
-  }catch(err){ console.error(err); alert('Xóa thất bại'); }
+  }catch(err){ console.error(err); alert('⚠️ Xóa thất bại'); }
 }
 
 // Modal
@@ -284,7 +298,7 @@ async function saveKitSettings(){
     closeKitSettings();
     loadMyKits();
     alert('Lưu thành công!');
-  }catch(err){ console.error(err); alert('Lưu thất bại'); }
+  }catch(err){ console.error(err); alert('⚠️ Lưu thất bại'); }
 }
 function closeKitSettings(){ document.getElementById('kitSettingsModal').style.display='none'; }
 
@@ -294,4 +308,3 @@ function flashcardMode(){
 </script>
 </body>
 </html>
-
