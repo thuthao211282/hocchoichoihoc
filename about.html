@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thành tích học sinh | Ez10</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<title>Thành tích học sinh | hocchoichoihoc</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <style>
 body {
   font-family: 'Poppins', sans-serif;
@@ -130,7 +130,7 @@ function randomAvatar(){
 function renderStats(list){
   const listDiv = document.getElementById('statsList');
   listDiv.innerHTML = '';
-  if(list.length===0){ listDiv.innerHTML = '<p>Không tìm thấy dữ liệu</p>'; return; }
+  if(list.length===0){ listDiv.innerHTML = '<p>⚠️ Không tìm thấy dữ liệu</p>'; return; }
 
   list.forEach(s=>{
     const percentage = ((s.correct/s.total)*100).toFixed(1);
@@ -158,13 +158,13 @@ function renderStats(list){
     // Gắn event listener cho nút delete
     const delBtn = submissionDiv.querySelector('.delete-btn');
     delBtn.addEventListener('click', async ()=>{
-      if(!confirm("Bạn có chắc muốn xóa submission này?")) return;
+      if(!confirm("⚠️ Bạn có chắc muốn xóa submission này?")) return;
       try{
         await deleteDoc(doc(ez10Db,"studentStats",s.docId));
         allSubmissions = allSubmissions.filter(sub => sub.docId !== s.docId);
         applyFilter();
       }catch(err){
-        alert("❌ Lỗi xóa: "+err.message);
+        alert("⚠️ Lỗi xóa: "+err.message);
       }
     });
   });
@@ -217,7 +217,7 @@ async function loadAllStats(){
 
   } catch(err) {
     console.error(err);
-    listDiv.innerHTML = `<p>❌ Lỗi khi tải dữ liệu: ${err.message}</p>`;
+    listDiv.innerHTML = `<p>⚠️ Lỗi khi tải dữ liệu: ${err.message}</p>`;
   }
 }
 
