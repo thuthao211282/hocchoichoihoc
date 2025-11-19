@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tạo bộ câu hỏi | hocchoichoi</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<title>Tạo bộ câu hỏi | hocchoichoihoc</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -44,13 +44,13 @@ textarea{min-height:100px;resize:vertical;}
 <div class="container">
 <header>
   <div>
-    <h1><i class="fa-solid fa-pen-to-square"></i> Create/Edit Kit</h1>
+    <h1><i class="fa-solid fa-pen-to-square"></i> Tạo bộ câu hỏi</h1>
     <div class="small">Người dùng: <strong id="currentUserDisplay"></strong></div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
-    <button id="btnDashboard"><i class="fa-solid fa-house"></i> Dashboard</button>
-    <button id="btnReload"><i class="fa-solid fa-rotate-right"></i> Reload</button>
-    <button id="btnSaveKit"><i class="fa-solid fa-save"></i> Save Kit</button>
+    <button id="btnDashboard"><i class="fa-solid fa-house"></i> Trang chủ</button>
+    <button id="btnReload"><i class="fa-solid fa-rotate-right"></i> Tải lại</button>
+    <button id="btnSaveKit"><i class="fa-solid fa-save"></i> Lưu bộ kit</button>
   </div>
 </header>
 
@@ -60,34 +60,34 @@ textarea{min-height:100px;resize:vertical;}
     <label for="kitTitle">Tên bộ câu hỏi</label>
     <input id="kitTitle" placeholder="Điền tên bộ câu hỏi...">
     <div style="margin-top:10px; display:flex; gap:12px;">
-      <button id="btnToggleManual" class="ghost"><i class="fa-solid fa-hand"></i> Add Manual Question</button>
-      <button id="btnImportFile" class="ghost"><i class="fa-solid fa-file-import"></i> Import from Word</button>
+      <button id="btnToggleManual" class="ghost"><i class="fa-solid fa-hand"></i> Thêm thủ công</button>
+      <button id="btnImportFile" class="ghost"><i class="fa-solid fa-file-import"></i> Tải câu hỏi từ file word</button>
       <input type="file" id="importFile" style="display:none" accept=".docx">
     </div>
     <div id="manualInput" style="display:none; margin-top:16px;">
-      <textarea id="manualQuestion" placeholder="Question text..."></textarea>
+      <textarea id="manualQuestion" placeholder="Câu hỏi..."></textarea>
       <div id="manualChoices" style="margin-top:8px;">
-        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Choice A"></div>
-        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Choice B"></div>
-        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Choice C"></div>
-        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Choice D"></div>
+        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Câu A"></div>
+        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Câu B"></div>
+        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Câu C"></div>
+        <div class="choice-item incorrect"><i class="fa-solid fa-xmark"></i><input placeholder="Câu D"></div>
       </div>
       <div class="manual-buttons">
-        <button id="btnAddManualQuestion"><i class="fa-solid fa-plus"></i> Add Question</button>
-        <button id="btnClearManual" class="ghost"><i class="fa-solid fa-xmark"></i> Clear</button>
+        <button id="btnAddManualQuestion"><i class="fa-solid fa-plus"></i> Thêm câu hỏi</button>
+        <button id="btnClearManual" class="ghost"><i class="fa-solid fa-xmark"></i> Xóa</button>
       </div>
     </div>
   </div>
   <div class="card">
-    <h3><i class="fa-solid fa-eye"></i> Preview Questions</h3>
-    <div id="questions" class="small">No questions yet.</div>
+    <h3><i class="fa-solid fa-eye"></i> Preview</h3>
+    <div id="questions" class="small">⚠️Chưa có câu hỏi.</div>
   </div>
 </section>
 
 <section class="right">
   <div class="card">
     <h3><i class="fa-solid fa-list"></i> Bộ câu hỏi của tôi</h3>
-    <div id="assignedKits" class="small">CHưa có bộ nào hết.</div>
+    <div id="assignedKits" class="small">⚠️ Chưa có bộ nào hết.</div>
   </div>
 </section>
 </div>
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderQuestions(){
     const c=$('questions'); c.innerHTML='';
-    if(!workingQuestions.length){ c.textContent='No questions yet.'; return; }
+    if(!workingQuestions.length){ c.textContent='⚠️ No questions yet.'; return; }
     workingQuestions.forEach((q,i)=>{
       const div=document.createElement('div'); div.className='card';
       div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
@@ -121,8 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="margin-top:8px">${q.choices.map((ch,idx)=>`<div style="margin-top:4px; display:flex; align-items:center;">
         <span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:${idx===q.correctIndex?'#37d67a':'#ccc'};color:#fff;text-align:center;line-height:24px;">${['A','B','C','D'][idx]}</span> ${ch}</div>`).join('')}</div></div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="ghost" data-edit="${i}"><i class="fa-solid fa-pen"></i> Edit</button>
-          <button class="warn" data-delete="${i}"><i class="fa-solid fa-trash"></i> Delete</button>
+          <button class="ghost" data-edit="${i}"><i class="fa-solid fa-pen"></i> Sửa</button>
+          <button class="warn" data-delete="${i}"><i class="fa-solid fa-trash"></i> Xóa</button>
         </div>
       </div>`; c.appendChild(div);
     });
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         a.download = (kit.title || 'kit') + '.docx';
         a.click();
         URL.revokeObjectURL(url);
-      } catch(err){ console.error(err); alert('Download failed'); }
+      } catch(err){ console.error(err); alert('⚠️ Tải thất bại'); }
     }
   });
 
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
       workingQuestions=kit.questions||[];
       renderQuestions();
       currentEditingKitId=editKitId;
-    }).catch(err=>{ console.error(err); alert('Load kit thất bại'); });
+    }).catch(err=>{ console.error(err); alert('⚠️ Tải kit thất bại'); });
   }
 
   // Save Kit
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       workingQuestions=[];$('kitTitle').value=''; renderQuestions(); loadAssignedKits();
       history.replaceState(null,'','assignments.html'); currentEditingKitId=null;
-    }catch(err){ console.error(err); alert('Lưu thất bại'); }
+    }catch(err){ console.error(err); alert('⚠️ Lưu thất bại'); }
   });
 
   // Load kits khi đăng nhập thành công
@@ -274,13 +274,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const kit=doc.data(); const div=document.createElement('div'); div.className='kit-row';
         div.innerHTML=`<div>${kit.title||'Untitled Kit'}</div>
         <div style="display:flex;gap:6px">
-          <button data-loadkit="${doc.id}" class="ghost"><i class="fa-solid fa-arrow-up-right-from-square"></i> Load</button>
-          <button data-downloadkit="${doc.id}" class="ghost"><i class="fa-solid fa-download"></i> Download</button>
-          <button data-deletekit="${doc.id}" class="warn"><i class="fa-solid fa-trash"></i> Delete</button>
+          <button data-loadkit="${doc.id}" class="ghost"><i class="fa-solid fa-arrow-up-right-from-square"></i> Xem</button>
+          <button data-downloadkit="${doc.id}" class="ghost"><i class="fa-solid fa-download"></i> Tải</button>
+          <button data-deletekit="${doc.id}" class="warn"><i class="fa-solid fa-trash"></i> Xóa</button>
         </div>`;
         out.appendChild(div);
       });
-    }catch(err){ console.error(err); out.textContent='Failed to load kits'; }
+    }catch(err){ console.error(err); out.textContent='⚠️ Tải kit thất bại'; }
   }
 
 });
