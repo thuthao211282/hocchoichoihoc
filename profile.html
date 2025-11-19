@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile | Thaococo</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.4.2/css/all.min.css">
+<title>Tài Khoản| hocchoichoihoc</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <style>
 body {
   font-family: 'Poppins', sans-serif;
@@ -75,7 +75,7 @@ input:focus {
   border:none;
   cursor:pointer;
   color:#007bff;
-  font-size:16px;
+  font-size:18px;
 }
 button {
   width:100%;
@@ -89,15 +89,23 @@ button {
   transition: all 0.3s;
 }
 button.save {
-  background: linear-gradient(135deg,#007bff,#4facfe);
+  background: linear-gradient(90deg,#007bff,#4facfe); /* 1 chiều */
   color:white;
 }
 button.save:hover {
   transform: scale(1.03);
   box-shadow:0 5px 15px rgba(0,123,255,0.4);
 }
+button.delete {
+  background: linear-gradient(90deg,#dc3545,#ff6b6b);
+  color:white;
+}
+button.delete:hover {
+  transform: scale(1.03);
+  box-shadow:0 5px 15px rgba(220,53,69,0.4);
+}
 button.back {
-  background: linear-gradient(135deg,#4facfe,#007bff);
+  background: linear-gradient(90deg,#4facfe,#007bff);
   color:white;
 }
 button.back:hover {
@@ -121,6 +129,7 @@ button.back:hover {
   </div>
 
   <button class="save">💾 Lưu</button>
+  <button class="delete">🗑 Xóa tài khoản</button>
   <button class="back">⬅ Về trang chủ</button>
 </div>
 
@@ -150,6 +159,7 @@ const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 const toggleBtn = document.querySelector(".toggle-password");
 const saveBtn = document.querySelector(".save");
+const deleteBtn = document.querySelector(".delete");
 const backBtn = document.querySelector(".back");
 
 // Load profile
@@ -158,8 +168,7 @@ async function loadProfile(){
   const docRef = doc(db,"thaococo",currentUser);
   const docSnap = await getDoc(docRef);
   if(docSnap.exists()){
-    const data = docSnap.data();
-    passwordInput.value = data.password || "";
+    passwordInput.value = docSnap.data().password || "";
   } else {
     passwordInput.value = "";
   }
@@ -187,16 +196,13 @@ saveBtn.addEventListener("click", async ()=>{
   }
 
   if(newUsername !== currentUser){
-    // Kiểm tra username mới đã tồn tại chưa
     const newDoc = await getDoc(doc(db,"thaococo",newUsername));
     if(newDoc.exists()){
       alert("Username này đã tồn tại, vui lòng chọn tên khác!");
       return;
     }
     try{
-      // Copy data sang username mới
       await setDoc(doc(db,"thaococo",newUsername), { password: pwd });
-      // Xóa username cũ
       await deleteDoc(doc(db,"thaococo",currentUser));
       localStorage.setItem("loggedInUser", newUsername);
       currentUser = newUsername;
@@ -206,13 +212,27 @@ saveBtn.addEventListener("click", async ()=>{
       alert("❌ Lỗi khi cập nhật: "+err.message);
     }
   } else {
-    // Chỉ cập nhật password
     try{
       await setDoc(doc(db,"thaococo",currentUser), { password: pwd });
       alert("✅ Password đã cập nhật thành công!");
     } catch(err){
       console.error(err);
       alert("❌ Lỗi khi lưu password: "+err.message);
+    }
+  }
+});
+
+// Delete account
+deleteBtn.addEventListener("click", async ()=>{
+  if(confirm("Xác nhận xóa tài khoản vĩnh viễn? Toàn bộ dữ liệu sẽ mất.")){
+    try{
+      await deleteDoc(doc(db,"thaococo",currentUser));
+      localStorage.removeItem("loggedInUser");
+      alert("✅ Tài khoản đã bị xóa!");
+      window.location.href = "login.html";
+    } catch(err){
+      console.error(err);
+      alert("❌ Lỗi khi xóa tài khoản: "+err.message);
     }
   }
 });
