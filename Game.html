@@ -199,7 +199,7 @@ button:hover{ transform:scale(1.05); box-shadow:0 6px 20px rgba(255,255,255,0.5)
 }
 .correct-hint::after {
     content: " ✓";
-    color: green;
+    color: white;
     font-weight: bold;
 }
 #snowCanvas {
@@ -591,32 +591,54 @@ function generateQuestion() {
     const qArea = document.getElementById('question-area');
     const grid = document.getElementById('answer-grid');
 
-    qArea.textContent = `Câu ${questionIndex + 1}: ${q.question}`;
+    // 👉 Làm khung câu hỏi lớn hơn (CSS inline hoặc bạn thêm vào CSS)
+    qArea.style.fontSize = "26px";
+    qArea.style.padding = "20px";
+    qArea.style.lineHeight = "1.5";
+    qArea.style.borderRadius = "8px";
+
+    // ❌ Bỏ "Câu 1:"
+    qArea.textContent = q.question;
+
     grid.innerHTML = '';
 
-    const labels = ["A", "B", "C", "D"];
+    // ======================
+    // 👉 XÁO TRỘN ĐÁP ÁN
+    // ======================
+    let choices = q.choices.map((text, index) => ({
+        text: text,
+        isCorrect: index === q.correctIndex
+    }));
 
-    q.choices.forEach((ch, i) => {
+    // Fisher–Yates shuffle
+    for (let i = choices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [choices[i], choices[j]] = [choices[j], choices[i]];
+    }
+
+    // Render cards
+    choices.forEach((ch, i) => {
         const card = document.createElement('div');
         card.className = 'answer-card ' + ['blue', 'green', 'red', 'yellow'][i % 4];
 
-        // 👉 Gắn A/B/C/D
-        card.textContent = `${labels[i]}. ${ch}`;
+        // 👉 Giảm bo góc
+        card.style.borderRadius = "8px";
+
+        // ❌ Không ghi A/B/C/D nữa — chỉ hiển thị text
+        card.textContent = ch.text;
 
         // 👉 Auto Correct (nếu có)
-        if (player.upgrades?.autoCorrect && i === q.correctIndex) {
+        if (player.upgrades?.autoCorrect && ch.isCorrect) {
             card.classList.add('correct-hint');
         }
 
         card.addEventListener('click', () => {
-            checkAnswer(i === q.correctIndex);
+            checkAnswer(ch.isCorrect);
         });
 
         grid.appendChild(card);
     });
-}
-
-// ===== CHECK ANSWER =====
+}// ===== CHECK ANSWER =====
 function checkAnswer(correct) {
   player.total++;
   const popup = document.getElementById('streak-popup');
@@ -626,19 +648,21 @@ function checkAnswer(correct) {
   popup.style.borderRadius = '15px';
 
   if (correct) {
-    // ===== ĐÚNG =====
     player.correct++;
-    if (player.upgrades?.boostSpeedActive) {
-    player.streak += 2; // Bonus
-} else {
-    player.streak += 1;
-};
 
+    // Tính bonus streak
+    let streakBonus = player.upgrades?.boostSpeedActive ? 2 : 1;
+    player.streak += streakBonus;
 
+    // Tính tiền kiếm được
     let earned = (player.streak + player.moneyPerStreak) * player.multiplierPerStreak;
+
+    // X2 money powerup
+    if (player.upgrades?.doubleMoney) earned *= 2;
+
     player.money += earned;
 
-    popup.textContent = `Correct! +$${Math.round(earned)}`;
+    popup.textContent = `Chính xác! +$${Math.round(earned)}`;
 
     // hiệu ứng streak fire
     const fire = document.createElement('div');
@@ -649,39 +673,28 @@ function checkAnswer(correct) {
     setTimeout(() => fire.remove(), 800);
 
   } else {
-
-    // ===== SAI =====
     if (player.insurance > 0) {
       player.insurance--;
-      popup.textContent = `Wrong! Streak protected!`;
-
+      popup.textContent = `Streak được bảo vệ!`;
     } else {
+      let penalty = Math.floor(player.streak + player.moneyPerStreak);
+      if (player.upgrades?.reduceLoss) penalty = Math.floor(penalty * 0.9);
+      penalty = Math.min(penalty, player.money);
+      player.money -= penalty;
+      player.streak = 0;
 
-      // ❗ Công thức trừ tiền khi sai
-      // Trừ theo streak hiện tại
-     let penalty = Math.floor(player.streak * 1 + player.moneyPerStreak);
-
-// ✅ Nếu người chơi có Reduce Loss
-if (player.upgrades?.reduceLoss) penalty = Math.floor(penalty * 0.9);
-
-penalty = Math.min(penalty, player.money);
-player.money -= penalty;
-player.streak = 0;
-
-
-      popup.textContent = `Wrong! -$${penalty}`;
+      popup.textContent = `Sai! -$${penalty}`;
     }
   }
 
   setTimeout(() => popup.style.display = 'none', 1400);
   updateStats();
-
+  
   // load câu tiếp theo
   questionIndex++;
   if (questionIndex >= questions.length) questionIndex = 0;
   generateQuestion();
 
-  // Check win
   if (player.money >= targetMoney) endGame();
 }
 
@@ -720,27 +733,26 @@ async function endGame() {
 
 // ===== STATS UPDATE =====
 function updateStats() {
-
   const moneyEl = document.getElementById('money');
   const targetEl = document.getElementById('targetMoney');
   const streakEl = document.getElementById('streakCount');
 
-  // % tiền so với target mới
+  // % tiền so với target
   const moneyPercent = Math.min((player.money / targetMoney) * 100, 100);
   moneyEl.style.width = Math.max(moneyPercent, 5) + '%';
   moneyEl.textContent = player.money;
 
-  // 🔥 HIỂN THỊ TARGET CHÍNH XÁC
-  targetEl.style.width = '100%';        // thanh background vẫn full
-  targetEl.textContent = '🎯 ' + targetMoney;   // Thêm icon + rõ ràng hơn
-  targetEl.style.display = 'flex';      // bảo đảm text không bị ẩn
+  // Target
+  targetEl.style.width = '100%';
+  targetEl.textContent = targetMoney;
+  targetEl.style.display = 'flex';
   targetEl.style.justifyContent = 'center';
   targetEl.style.alignItems = 'center';
 
   // Streak
   const streakPercent = Math.min(player.streak * 10, 100);
   streakEl.style.width = streakPercent + '%';
-  streakEl.textContent = '🔥' + player.streak;
+  streakEl.textContent = player.streak;
 }
 
 // ===== SHOP =====
@@ -762,62 +774,63 @@ function initShop() {
     popup.textContent = msg;
     setTimeout(() => popup.style.display = 'none', 1400);
   }
- // ===== Upgrade =====
-upgradeList.innerHTML = '';
-const upgradeItems = [
-  {name:'Giảm mục tiêu', price:100, desc:'Giảm 100 mục tiêu tiền thắng xuống'},
-  {name:'Tăng tốc', price:200, desc:'Tăng streak +2 trong 30 giây'}
-];
-upgradeItems.forEach((item) => {
-  const card = document.createElement('div');
-  card.className = 'shop-card';
-  card.textContent = `${item.name} - $${item.price}`;
-  const tooltip = document.createElement('div');
-  tooltip.className = 'tooltip';
-  tooltip.textContent = item.desc;
-  card.appendChild(tooltip);
 
- card.addEventListener('click', () => {
-  if (player.money >= item.price) {
-    player.money -= item.price;
+  // ===== Upgrade =====
+  upgradeList.innerHTML = '';
+  const upgradeItems = [
+    {name:'Giảm mục tiêu', price:100, desc:'Giảm mục tiêu tiền thắng còn + targetMoney'},
+    {name:'Tăng tốc', price:200, desc:'Cộng 2 streak bonus mỗi câu trả lời đúng'},
+    {name:'Giảm thiệt hại', price:250, desc:'Giảm 10% tiền phạt khi trả lời sai'}
+  ];
 
-    if (item.name === 'Reduce Target') {
-      // 🔥 Giảm targetMoney đúng 100
-      targetMoney = Math.max(100, targetMoney - 100);
-      updateStats();
-      showPopup('🎯 Đã giảm mục tiêu xuống còn: ' + targetMoney);
-      return;
-    }
+  upgradeItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'shop-card';
+    card.textContent = `${item.name} - $${item.price}`;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = item.desc;
+    card.appendChild(tooltip);
 
-    if (item.name === 'Boost Speed') {
-      player.upgrades = player.upgrades || {};
-      player.upgrades.boostSpeedActive = true;
+    card.addEventListener('click', () => {
+      if (player.money >= item.price) {
+        player.money -= item.price;
 
-      setTimeout(() => {
-        player.upgrades.boostSpeedActive = false;
-        showPopup("⏱ Boost Speed hết hạn!");
-      }, 30000);
+        if (item.name === 'Giảm mục tiêu') {
+          targetMoney = Math.max(100, targetMoney - 100);
+          showPopup('Đã giảm mục tiêu xuống còn: ' + targetMoney);
+        }
 
-      updateStats();
-      showPopup('⚡ Boost Speed đã kích hoạt 30s');
-      return;
-    }
+        if (item.name === 'Tăng tốc') {
+          player.upgrades = player.upgrades || {};
+          player.upgrades.boostSpeedActive = true;
+          showPopup('⚡ Boost Speed đã kích hoạt trong 30s');
+          setTimeout(() => {
+            player.upgrades.boostSpeedActive = false;
+            showPopup("⏱ Boost Speed hết hạn!");
+          }, 30000);
+        }
 
-  } else {
-    showPopup(`Thiếu tiền! Cần $${item.price}`);
-  }
-});
+        if (item.name === 'Giảm thiệt hại') {
+          player.upgrades = player.upgrades || {};
+          player.upgrades.reduceLoss = true;
+          showPopup('🛡 Giảm thiệt hại khi trả lời sai đã kích hoạt!');
+        }
 
+        updateStats();
+      } else {
+        showPopup(`Thiếu tiền! Cần $${item.price}`);
+      }
+    });
 
-  upgradeList.appendChild(card);
-});
-
+    upgradeList.appendChild(card);
+  });
 
   // ===== Money per Streak =====
   moneyStreakList.innerHTML = '';
   const moneyStreakItems = [
-    {name:'+1 mỗi streak', price:50, desc:'Mỗi streak đúng thêm +1 tiền'},
-    {name:'+5 mỗi streak', price:100, desc:'Mỗi streak đúng thêm +5 tiền'}
+    {name:'+1$ mỗi streak', price:50, desc:'Mỗi câu trả lời đúng bonus thêm 1'},
+    {name:'+5$ mỗi streak', price:100, desc:'Mỗi câu trả lời bonus thêm 5'}
   ];
   moneyStreakItems.forEach(item => {
     const card = document.createElement('div');
@@ -844,8 +857,8 @@ upgradeItems.forEach((item) => {
   // ===== Multiplier =====
   multiplierList.innerHTML = '';
   const multiplierItems = [
-    {name:'x1.5', price:200, desc:'Nhân tiền mỗi streak đúng 1.5 lần'},
-    {name:'x2', price:400, desc:'Nhân tiền mỗi streak đúng 2 lần'}
+    {name:'x1.5', price:200, desc:'Mỗi câu trả lời đúng bonus x1.5 số tiền'},
+    {name:'x2', price:400, desc:'Mỗi câu trả lời đúng bonus x2 số tiền'}
   ];
   multiplierItems.forEach(item => {
     const card = document.createElement('div');
@@ -873,8 +886,7 @@ upgradeItems.forEach((item) => {
   insuranceList.innerHTML = '';
   const insuranceItems = [
     {name:'Bảo vệ streak', price:150, desc:'Bảo vệ streak khi trả lời sai'},
-    {name:'Bảo hiểm tiền', price:300, desc:'Giảm thiệt hại 10% khi trả lời sai'}
-  ];
+    ];
   insuranceItems.forEach(item => {
     const card = document.createElement('div');
     card.className = 'shop-card';
@@ -901,7 +913,7 @@ upgradeItems.forEach((item) => {
   powerupList.innerHTML = '';
   const powerupItems = [
     {name:'X2 tiền', price:300, desc:'Nhân đôi tiền kiếm được trong 15 giây'},
-    {name:'Gợi ý đáp án', price:450, desc:'Đáp án đúng câu trả lời kế tiếp trong 15 giây'}
+    {name:'Gợi ý đáp án', price:450, desc:'Gợi ý đáp án đúng câu trả lời kế tiếp trong 15 giây'}
   ];
   powerupItems.forEach(item => {
     const card = document.createElement('div');
@@ -912,25 +924,37 @@ upgradeItems.forEach((item) => {
     tooltip.textContent = item.desc;
     card.appendChild(tooltip);
 
- card.addEventListener('click', () => {
-    if (player.money >= item.price) {
-        player.money -= item.price;
-        player.upgrades = player.upgrades || {};
-        player.upgrades.autoCorrect = true;
-        player.powerupEnd = Date.now() + 15000;
-        setTimeout(() => { player.upgrades.autoCorrect = false; }, 15000);
+card.addEventListener('click', () => {
+  if (player.money >= item.price) {
+    player.money -= item.price;
+    player.upgrades = player.upgrades || {};
+    player.powerupEnd = Date.now() + 15000; // 15s
 
-        updateStats();
-        showPopup(`Mua ${item.name} thành công! Tự động đúng trong 15s`);
+    if (item.name === 'Gợi ý đáp án') {
+      player.upgrades.autoCorrect = true;
+      setTimeout(() => { 
+        player.upgrades.autoCorrect = false; 
+        showPopup(`Nâng cấp "${item.name}" đã hết thời gian!`);
+      }, 15000);
+      showPopup(`Mua ${item.name} thành công! Hiển thị đáp án cho câu kế tiếp trong 15s`);
     } else {
-        showPopup(`Thiếu tiền! Cần $${item.price}`);
+      player.upgrades.doubleMoney = true;
+      setTimeout(() => { 
+        player.upgrades.doubleMoney = false; 
+        showPopup(`Nâng cấp "${item.name}" đã hết thời gian!`);
+      }, 15000);
+      showPopup(`Mua ${item.name} thành công! Nhân đôi tiền trong 15s`);
     }
+
+    updateStats();
+  } else {
+    showPopup(`Thiếu tiền! Cần $${item.price}`);
+  }
 });
 
     powerupList.appendChild(card);
   });
-
-  // ===== Invest =====
+ // ===== Invest =====
   investTable.innerHTML = '<tr><th>Công ty</th><th>Giá</th><th>Mua</th><th>Bán</th></tr>';
   companies.forEach(c => {
     const tr = document.createElement('tr');
@@ -1040,4 +1064,3 @@ function initInvestTable() {
 
 </body>
 </html>
-
